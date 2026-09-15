@@ -127,13 +127,30 @@ tr.division-header td {
 
 /* --- Scoreboard --- */
 .matchup {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 2em 1fr;
   align-items: baseline;
   padding: 6pt 8pt;
   margin-bottom: 4pt;
   border: 0.5pt solid #ddd;
   border-radius: 3pt;
+}
+
+.matchup .team {
+  min-width: 0;
+}
+
+.matchup .team:first-child {
+  text-align: left;
+}
+
+.matchup .team:last-child {
+  text-align: right;
+}
+
+.matchup .vs {
+  text-align: center;
+  color: #999;
 }
 
 .matchup .team.winner {

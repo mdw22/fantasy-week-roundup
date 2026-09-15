@@ -30,7 +30,7 @@
       {{ display_name(m.home_team_name) }}
       <span class="score">{{ "%.2f"|format(m.home_score) }}</span>
     </div>
-    <div>vs</div>
+    <div class="vs">vs</div>
     <div class="team {{ 'winner' if m.winner_name == m.away_team_name else '' }}">
       <span class="score">{{ "%.2f"|format(m.away_score) }}</span>
       {{ display_name(m.away_team_name) }}
@@ -131,7 +131,7 @@
 </div>
 
 <div class="section letter">
-  <h2>The Commissioner's Letter</h2>
+  <h2>Raven From {{ league.commissioner_name }}</h2>
   <div class="letter-date">{{ report.report_date.strftime("%B %-d, %Y") }}</div>
   <div class="letter-body">
     {% for paragraph in (report.commissioners_letter or "").split("\n\n") %}

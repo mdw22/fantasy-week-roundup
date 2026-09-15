@@ -17,9 +17,9 @@ from .stats import PlayerStat, TeamStat
 MODEL = "claude-opus-5"
 
 SYSTEM_PROMPT = """You are the ghostwriter for a fantasy football league's weekly recap letter. \
-You write in the voice of the league's commissioner persona, staying fully in the theme the \
-user gives you. You are given structured data about the week's matchups and standout \
-performances, plus a running "lore" log of nicknames and storylines from prior weeks.
+You write in the voice of the persona the user gives you, staying fully in the theme the user \
+gives you. You are given structured data about the week's matchups and standout performances, \
+plus a running "lore" log of nicknames and storylines from prior weeks.
 
 Write one flowing narrative, roughly 500-800 words, that:
 - References every matchup listed, using real scores and margins naturally rather than just
@@ -27,10 +27,10 @@ Write one flowing narrative, roughly 500-800 words, that:
 - Stays in-theme throughout
 - Weaves in the team/individual highlights and standings context where they add color
 - Builds on established lore/callbacks where natural, rather than starting cold
-- Ends with a short closing line in the commissioner persona's voice (e.g. "Until next week," or
-  an in-theme equivalent) — do NOT sign the name or title at the end. The document this letter is
-  rendered into already appends a formatted signature block with the commissioner's name below the
-  body, so signing it yourself would duplicate that.
+- Ends with a short closing line in the persona's voice (e.g. "Until next week," or an in-theme
+  equivalent) — do NOT sign the name or title at the end. The document this letter is rendered
+  into already appends a formatted signature block with the persona's name below the body, so
+  signing it yourself would duplicate that.
 
 Output only the letter itself — no preamble, no meta-commentary. Write in plain prose: no
 markdown formatting of any kind (no **bold**, no headers, no bullet points) — the letter is
@@ -110,7 +110,7 @@ def append_lore_entry(lore_path: str | Path, week: int, summary_line: str) -> No
 
 def build_prompt(theme: str, commissioner_name: str, week_summary: dict, lore_text: str) -> str:
     return f"""League theme: {theme}
-Commissioner persona: {commissioner_name}
+Persona: {commissioner_name}
 
 Running lore log (prior weeks' storylines and callbacks):
 {lore_text or "(no prior lore yet — this is the first entry)"}
@@ -118,7 +118,7 @@ Running lore log (prior weeks' storylines and callbacks):
 This week's structured data:
 {json.dumps(week_summary, indent=2)}
 
-Write this week's Commissioner's Letter now."""
+Write this week's letter now."""
 
 
 def generate_commissioners_letter(
