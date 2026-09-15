@@ -1,0 +1,8 @@
+espn_api>=0.40.0
+python-dotenv>=1.0.0
+PyYAML>=6.0
+Jinja2>=3.1
+WeasyPrint>=62.0
+anthropic>=0.40.0
+matplotlib>=3.8
+nflreadpy>=0.1.0

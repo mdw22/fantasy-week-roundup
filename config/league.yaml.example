@@ -1,0 +1,5 @@
+league_name: "Phi Fantasy Football League"
+commissioner_name: "Aaron Stark"
+narrative_theme: "Game of Thrones — teams as rival houses, season as a running war"
+team_nickname_overrides: {}   # optional: ESPN team name -> preferred display name
+logo_path: "templates/assets/league_logo.png"

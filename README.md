@@ -1,1 +1,82 @@
 # fantasy-week-roundup
+
+Generates a styled weekly PDF recap of the Phi Fantasy Football League from ESPN's fantasy API —
+a scoreboard, stat-highlight tables, current standings, and an AI-written "Commissioner's Letter"
+narrating the week in the league's running Game of Thrones theme.
+
+## Setup
+
+Requires Python 3.11+.
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+WeasyPrint (PDF rendering) needs system libraries beyond pip:
+
+- **macOS:** `brew install pango`
+- **Ubuntu/Debian** (also what the GitHub Actions workflow installs):
+  `apt-get install libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf2.0-0`
+
+### Configuration
+
+1. Copy `.env.example` to `.env` and fill in:
+   - `LEAGUE_ID`, `SEASON_YEAR` — from your league's ESPN URL
+   - `ESPN_S2`, `SWID` — session cookies from browser dev tools while logged into ESPN Fantasy
+     (private-league auth; quote both values)
+   - `ANTHROPIC_API_KEY` — for the Commissioner's Letter narrative
+2. Copy `config/league.yaml.example` to `config/league.yaml` and fill in league name,
+   commissioner persona, narrative theme, and any team nickname overrides.
+3. (Optional) Copy `config/power_rankings_override.yaml.example` to
+   `config/power_rankings_override.yaml` to manually set the "Commissioner" power-rankings column
+   before a run; omitted teams fall back to ESPN's algorithmic ranking.
+
+`.env`, `config/league.yaml`, and `config/power_rankings_override.yaml` are all gitignored —
+they're account-specific and shouldn't be committed. `config/lore.md` *is* committed: it's an
+append-only running log the narrative generator reads for continuity and writes to after each run.
+
+## Usage
+
+```bash
+python -m src.main                # most recently completed week
+python -m src.main --week 3       # explicit week override, for backfilling/testing
+```
+
+Output lands in `reports/week_<N>_<year>.pdf` and is committed back to the repo (see §7/§9 of
+the design spec for why: the tool is stateless and re-fetches ESPN data each run, except for the
+lore file).
+
+## Running tests
+
+```bash
+pip install pytest
+pytest tests/
+```
+
+`tests/test_stats.py` covers the highlight math in `src/stats.py` against fixture data — no live
+ESPN connection or API key required.
+
+## Project layout
+
+See `src/espn_client.py` (league connection + raw fetches), `src/stats.py` (highlight math),
+`src/narrative.py` (Commissioner's Letter prompt + Claude API call), `src/report_data.py`
+(assembles one `WeekReport` per run), `src/render.py` (Jinja2 + WeasyPrint → PDF), and
+`src/main.py` (CLI entry point).
+
+## Known gaps (Phase 2)
+
+- **Rookie Spotlight** and **Gamecock of the Week** are stubbed in `src/stats.py` — both need
+  cross-referencing ESPN roster data against `nflreadpy` (rookie-year flags; South Carolina alums
+  and their weekly stat lines), which isn't wired up yet.
+- **Season-finale bonus sections** (PF trendlines, All-Fantasy Team, season appendix, etc.) have
+  a template hook (`report.is_season_finale`) but no data yet — `report_data.py` doesn't populate
+  `WeekReport.season_extras`.
+
+## Automation
+
+`.github/workflows/weekly-report.yml` runs the generator on a schedule (Tuesday mornings, after
+Monday Night Football stats finalize) and on manual dispatch, committing the new PDF and updated
+lore file back to the repo. Requires repo secrets: `LEAGUE_ID`, `SEASON_YEAR`, `ESPN_S2`, `SWID`,
+`ANTHROPIC_API_KEY`.

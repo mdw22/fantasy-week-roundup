@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+config/league.yaml
+config/power_rankings_override.yaml
+.DS_Store

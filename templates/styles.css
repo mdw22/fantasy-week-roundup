@@ -1,0 +1,174 @@
+@page {
+  size: letter;
+  margin: 0.75in 0.65in 0.9in 0.65in;
+
+  @bottom-center {
+    content: element(footer);
+  }
+}
+
+@page cover {
+  @bottom-center { content: none; }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #1a1a1a;
+  font-size: 10.5pt;
+  line-height: 1.4;
+  margin: 0;
+}
+
+h1, h2, h3 {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  margin: 0 0 0.3em 0;
+}
+
+.section {
+  page-break-before: always;
+}
+
+.section:first-child {
+  page-break-before: avoid;
+}
+
+/* --- Footer, repeated on every page except the cover --- */
+.footer {
+  position: running(footer);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4in;
+  font-size: 7.5pt;
+  color: #777;
+  border-top: 0.5pt solid #ccc;
+  padding-top: 4pt;
+}
+
+.footer img {
+  height: 16pt;
+  width: auto;
+}
+
+/* --- Cover page --- */
+.cover {
+  page: cover;
+  height: 9.2in;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.cover img.logo {
+  max-width: 2.4in;
+  max-height: 2.4in;
+  margin-bottom: 0.4in;
+}
+
+.cover .league-name {
+  font-size: 22pt;
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+}
+
+.cover .week-title {
+  font-size: 16pt;
+  margin-top: 0.15in;
+  color: #444;
+}
+
+.cover .report-date {
+  font-size: 10pt;
+  color: #888;
+  margin-top: 0.3in;
+}
+
+/* --- Tables --- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.15in 0 0.3in 0;
+  font-size: 9.5pt;
+}
+
+th, td {
+  text-align: left;
+  padding: 4pt 6pt;
+  border-bottom: 0.5pt solid #ddd;
+}
+
+th {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.3pt;
+  color: #555;
+  border-bottom: 1pt solid #999;
+}
+
+tr.winner td {
+  font-weight: bold;
+}
+
+tr.division-header td {
+  background: #f2f2f2;
+  font-weight: bold;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  color: #555;
+}
+
+/* --- Scoreboard --- */
+.matchup {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6pt 8pt;
+  margin-bottom: 4pt;
+  border: 0.5pt solid #ddd;
+  border-radius: 3pt;
+}
+
+.matchup .team.winner {
+  font-weight: bold;
+}
+
+.matchup .score {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Letter --- */
+.letter {
+  max-width: 6.5in;
+  margin: 0 auto;
+}
+
+.letter .letter-date {
+  text-align: right;
+  color: #666;
+  margin-bottom: 0.3in;
+}
+
+.letter .letter-body p {
+  margin: 0 0 0.9em 0;
+  text-align: justify;
+}
+
+.letter .signature {
+  margin-top: 0.4in;
+  font-style: italic;
+}
+
+/* --- Highlight tables --- */
+.highlight-detail {
+  color: #777;
+  font-size: 8.5pt;
+}

@@ -1,0 +1,7 @@
+# Manual "Commissioner" power rankings, updated by hand before each run.
+# Keys are ESPN team_name values (must match exactly). Value is the rank (1 = best).
+# Any team omitted falls back to the ESPN algorithmic power ranking for that week.
+#
+# week_14:
+#   "House Stark": 1
+#   "Member Berries": 2

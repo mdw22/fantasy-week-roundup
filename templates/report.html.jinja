@@ -1,0 +1,151 @@
+<title>{{ league.league_name }} — Week {{ report.week }} Report</title>
+<style>{% include "styles.css" %}</style>
+
+{% macro display_name(team_name) -%}
+{{ (league.team_nickname_overrides.get(team_name, team_name) if league.team_nickname_overrides else team_name) | clean_team_name }}
+{%- endmacro %}
+
+<div class="footer">
+  {% if league.logo_path %}<img src="{{ league.logo_path }}" alt="">{% endif %}
+  <span>{{ league.league_name }} · Week {{ report.week }} · {{ report.season_year }}</span>
+  <img src="assets/espn_logo.png" alt="ESPN" onerror="this.style.display='none'">
+  <img src="assets/nfl_logo.png" alt="NFL" onerror="this.style.display='none'">
+</div>
+
+<div class="cover">
+  {% if league.logo_path %}<img class="logo" src="{{ league.logo_path }}" alt="">{% endif %}
+  <div class="league-name">{{ league.league_name }}</div>
+  <div class="week-title">
+    {% if report.is_season_finale %}Season Finale — Week {{ report.week }} Report
+    {%- else %}Week {{ report.week }} Report{% endif %}
+  </div>
+  <div class="report-date">{{ report.report_date.strftime("%B %-d, %Y") }}</div>
+</div>
+
+<div class="section">
+  <h2>Week {{ report.week }} Scoreboard</h2>
+  {% for m in report.matchups %}
+  <div class="matchup">
+    <div class="team {{ 'winner' if m.winner_name == m.home_team_name else '' }}">
+      {{ display_name(m.home_team_name) }}
+      <span class="score">{{ "%.2f"|format(m.home_score) }}</span>
+    </div>
+    <div>vs</div>
+    <div class="team {{ 'winner' if m.winner_name == m.away_team_name else '' }}">
+      <span class="score">{{ "%.2f"|format(m.away_score) }}</span>
+      {{ display_name(m.away_team_name) }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="section">
+  <h2>Current Standings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Team</th>
+        <th>Record</th>
+        <th>PF</th>
+        <th>PA</th>
+        <th>Streak</th>
+        <th>Playoff %</th>
+        <th>Power Rank</th>
+        <th>Commissioner Rank</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set divisions = report.standings | map(attribute="division_name") | unique | list %}
+      {% if divisions | length > 1 %}
+        {% for division in divisions %}
+        <tr class="division-header"><td colspan="8">{{ division }}</td></tr>
+        {% for row in report.standings if row.division_name == division %}
+        <tr>
+          <td>{{ display_name(row.team_name) }}</td>
+          <td>{{ row.wins }}-{{ row.losses }}{% if row.ties %}-{{ row.ties }}{% endif %}</td>
+          <td>{{ "%.2f"|format(row.points_for) }}</td>
+          <td>{{ "%.2f"|format(row.points_against) }}</td>
+          <td>{{ row.streak }}</td>
+          <td>{{ "%.1f%%"|format(row.playoff_pct) if row.playoff_pct is not none else "—" }}</td>
+          <td>{{ row.power_rank if row.power_rank is not none else "—" }}</td>
+          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+      {% else %}
+        {% for row in report.standings %}
+        <tr>
+          <td>{{ display_name(row.team_name) }}</td>
+          <td>{{ row.wins }}-{{ row.losses }}{% if row.ties %}-{{ row.ties }}{% endif %}</td>
+          <td>{{ "%.2f"|format(row.points_for) }}</td>
+          <td>{{ "%.2f"|format(row.points_against) }}</td>
+          <td>{{ row.streak }}</td>
+          <td>{{ "%.1f%%"|format(row.playoff_pct) if row.playoff_pct is not none else "—" }}</td>
+          <td>{{ row.power_rank if row.power_rank is not none else "—" }}</td>
+          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}</td>
+        </tr>
+        {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Week {{ report.week }} Team Highlights</h2>
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Team</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      {% for label, stat in report.team_highlights.items() %}
+      <tr>
+        <td>{{ label }}</td>
+        <td>{{ display_name(stat.team_name) }}</td>
+        <td>
+          {{ "%.2f"|format(stat.value) }}
+          {% if stat.detail %}<div class="highlight-detail">{{ stat.detail }}</div>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Week {{ report.week }} Individual Highlights</h2>
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Player</th><th>Team</th><th>Points</th></tr>
+    </thead>
+    <tbody>
+      {% for label, stat in report.individual_highlights.items() %}
+      <tr>
+        <td>{{ label }}</td>
+        <td>{{ stat.player_name }} <span class="highlight-detail">({{ stat.position }} — {{ stat.pro_team }})</span></td>
+        <td>
+          {% if stat.team_name %}{{ display_name(stat.team_name) }}{% else %}<span class="highlight-detail">unrostered</span>{% endif %}
+        </td>
+        <td>{{ "%.2f"|format(stat.points) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section letter">
+  <h2>The Commissioner's Letter</h2>
+  <div class="letter-date">{{ report.report_date.strftime("%B %-d, %Y") }}</div>
+  <div class="letter-body">
+    {% for paragraph in (report.commissioners_letter or "").split("\n\n") %}
+      {% if paragraph.strip() %}<p>{{ paragraph.strip() }}</p>{% endif %}
+    {% endfor %}
+  </div>
+  <div class="signature">— {{ league.commissioner_name }}</div>
+</div>
+
+{% if report.is_season_finale and report.season_extras %}
+<div class="section">
+  <h2>Season Highlights</h2>
+  {# Season-finale-only blocks: PF trendlines, top players, All-Fantasy Team, Team MVPs,
+     best single-week performances, season stats appendix. Populated once report_data.py
+     grows a season-finale code path (build order item 5 in the design spec). #}
+</div>
+{% endif %}
