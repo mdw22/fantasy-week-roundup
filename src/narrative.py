@@ -92,8 +92,20 @@ def read_lore(lore_path: str | Path) -> str:
 
 
 def append_lore_entry(lore_path: str | Path, week: int, summary_line: str) -> None:
-    with open(lore_path, "a") as f:
-        f.write(f"- **Week {week}:** {summary_line}\n")
+    """Add this week's one-line summary, replacing any existing entry for the same week rather
+    than duplicating it — re-running a week (e.g. after editing a letter draft, or backfilling)
+    is a normal part of the workflow, not a new event in the league's history."""
+    path = Path(lore_path)
+    new_line = f"- **Week {week}:** {summary_line}"
+    week_marker = f"- **Week {week}:**"
+
+    lines = path.read_text().splitlines() if path.exists() else []
+    if any(line.startswith(week_marker) for line in lines):
+        lines = [new_line if line.startswith(week_marker) else line for line in lines]
+        path.write_text("\n".join(lines) + "\n")
+    else:
+        with open(path, "a") as f:
+            f.write(new_line + "\n")
 
 
 def build_prompt(theme: str, commissioner_name: str, week_summary: dict, lore_text: str) -> str:

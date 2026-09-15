@@ -48,6 +48,26 @@ Output lands in `reports/week_<N>_<year>.pdf` and is committed back to the repo 
 the design spec for why: the tool is stateless and re-fetches ESPN data each run, except for the
 lore file).
 
+### Editing the Commissioner's Letter before it renders
+
+To review or hand-edit the narrative before it's baked into a PDF, split the run into two steps:
+
+```bash
+python -m src.main --week 3 --draft-only
+# -> writes drafts/week_3_2026_letter.txt and prints the follow-up command
+
+# edit drafts/week_3_2026_letter.txt by hand, then:
+python -m src.main --week 3 --letter-file drafts/week_3_2026_letter.txt
+```
+
+`--draft-only` generates the letter and stops — it doesn't touch the lore file or render a PDF.
+`--letter-file` skips narrative generation entirely and uses that file's contents verbatim as the
+letter, then proceeds normally (lore update + PDF render). `drafts/` is gitignored — it's scratch
+space, not part of the committed report history. Note that each step re-fetches ESPN data
+independently (per the stateless design above), so if scores get corrected between the two steps,
+the rendered tables could reflect newer data than what the letter was written against — rare, but
+worth a re-read if you edit long after generating the draft.
+
 ## Running tests
 
 ```bash
