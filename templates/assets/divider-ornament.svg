@@ -1,0 +1,8 @@
+<svg viewBox="0 0 240 24" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#7a1f2e" stroke-width="1">
+    <line x1="0" y1="12" x2="98" y2="12" />
+    <line x1="142" y1="12" x2="240" y2="12" />
+  </g>
+  <path d="M120 2 L132 12 L120 22 L108 12 Z" fill="#a9812f" />
+  <path d="M120 6 L126 12 L120 18 L114 12 Z" fill="#7a1f2e" />
+</svg>

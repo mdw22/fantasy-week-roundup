@@ -2,4 +2,5 @@ league_name: "Phi Fantasy Football League"
 commissioner_name: "Aaron Stark"
 narrative_theme: "Game of Thrones — teams as rival houses, season as a running war"
 team_nickname_overrides: {}   # optional: ESPN team name -> preferred display name
-logo_path: "templates/assets/league_logo.png"
+logo_path: "assets/league_logo.png"   # relative to templates/ — the WeasyPrint render base dir
+seal_monogram: ""   # optional: 1-2 letters for the wax-seal emblem; defaults to commissioner_name's initial

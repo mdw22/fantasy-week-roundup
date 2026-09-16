@@ -18,9 +18,17 @@ def clean_team_name(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip()
 
 
+def asset_exists(relative_path: str) -> bool:
+    """Checks a template-relative asset path against disk — lets the template fall back to
+    generated graphics (e.g. the wax seal) when an optional asset like the league logo hasn't
+    been supplied yet, rather than silently rendering a broken image."""
+    return bool(relative_path) and (TEMPLATE_DIR / relative_path).is_file()
+
+
 def render_html(report: WeekReport, league_config: dict) -> str:
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     env.filters["clean_team_name"] = clean_team_name
+    env.globals["asset_exists"] = asset_exists
     template = env.get_template("report.html.jinja")
     return template.render(report=report, league=league_config)
 

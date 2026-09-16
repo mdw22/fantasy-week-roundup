@@ -1,14 +1,78 @@
+@font-face {
+  font-family: "Cinzel";
+  font-weight: 400;
+  src: url("assets/fonts/Cinzel-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Cinzel";
+  font-weight: 600;
+  src: url("assets/fonts/Cinzel-SemiBold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Cinzel";
+  font-weight: 700;
+  src: url("assets/fonts/Cinzel-Bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Cinzel";
+  font-weight: 900;
+  src: url("assets/fonts/Cinzel-Black.ttf") format("truetype");
+}
+@font-face {
+  font-family: "EB Garamond";
+  font-style: normal;
+  font-weight: 400;
+  src: url("assets/fonts/EBGaramond-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "EB Garamond";
+  font-style: italic;
+  font-weight: 400;
+  src: url("assets/fonts/EBGaramond-Italic.ttf") format("truetype");
+}
+@font-face {
+  font-family: "EB Garamond";
+  font-style: normal;
+  font-weight: 600;
+  src: url("assets/fonts/EBGaramond-SemiBold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "EB Garamond";
+  font-style: normal;
+  font-weight: 700;
+  src: url("assets/fonts/EBGaramond-Bold.ttf") format("truetype");
+}
+
+:root {
+  --ink: #262220;
+  --muted: #6e6660;
+  --faint: #a39a91;
+  --accent: #7a1f2e;
+  --accent-dark: #56141f;
+  --gold: #a9812f;
+  --hairline: #e4ddd4;
+  --row-tint: #faf6f0;
+  --header-bg: #2b2320;
+}
+
 @page {
   size: letter;
-  margin: 0.75in 0.65in 0.9in 0.65in;
+  margin: 0.75in 0.65in 0.95in 0.65in;
 
   @bottom-center {
     content: element(footer);
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 7.5pt;
+    color: var(--faint);
   }
 }
 
 @page cover {
   @bottom-center { content: none; }
+  @bottom-right { content: none; }
 }
 
 * {
@@ -16,24 +80,53 @@
 }
 
 body {
-  font-family: "Georgia", "Times New Roman", serif;
-  color: #1a1a1a;
-  font-size: 10.5pt;
-  line-height: 1.4;
+  font-family: "EB Garamond", "Georgia", "Times New Roman", serif;
+  color: var(--ink);
+  font-size: 11.5pt;
+  line-height: 1.45;
   margin: 0;
 }
 
 h1, h2, h3 {
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
   margin: 0 0 0.3em 0;
+}
+
+h2 {
+  color: var(--accent);
+  font-size: 15pt;
+  letter-spacing: 0.5pt;
+  padding-bottom: 6pt;
+  border-bottom: 1.5pt solid var(--accent);
+  margin-bottom: 0.2in;
 }
 
 .section {
   page-break-before: always;
+  position: relative;
 }
 
 .section:first-child {
   page-break-before: avoid;
+}
+
+.wax-seal {
+  display: inline-block;
+  line-height: 0;
+}
+
+.wax-seal svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.divider-ornament {
+  display: block;
+  width: 2.3in;
+  height: auto;
+  margin: 0 auto 0.3in auto;
 }
 
 /* --- Footer, repeated on every page except the cover --- */
@@ -44,8 +137,8 @@ h1, h2, h3 {
   justify-content: center;
   gap: 0.4in;
   font-size: 7.5pt;
-  color: #777;
-  border-top: 0.5pt solid #ccc;
+  color: var(--muted);
+  border-top: 0.75pt solid var(--gold);
   padding-top: 4pt;
 }
 
@@ -63,29 +156,70 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   text-align: center;
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 78%, #f7f1e8 100%);
 }
+
+.cover .corner {
+  position: absolute;
+  width: 0.85in;
+  height: 0.85in;
+}
+
+.cover .corner.tl { top: 0.35in; left: 0.35in; }
+.cover .corner.tr { top: 0.35in; right: 0.35in; transform: scaleX(-1); }
+.cover .corner.bl { bottom: 0.35in; left: 0.35in; transform: scaleY(-1); }
+.cover .corner.br { bottom: 0.35in; right: 0.35in; transform: scale(-1, -1); }
 
 .cover img.logo {
   max-width: 2.4in;
   max-height: 2.4in;
-  margin-bottom: 0.4in;
+  margin-bottom: 0.3in;
+}
+
+.cover .seal {
+  width: 0.85in;
+  height: 0.85in;
+  margin-bottom: 0.25in;
+}
+
+.cover .eyebrow {
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 9pt;
+  letter-spacing: 4pt;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.15in;
 }
 
 .cover .league-name {
-  font-size: 22pt;
-  font-weight: bold;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 27pt;
+  font-weight: 700;
   letter-spacing: 0.5pt;
+  color: var(--ink);
+}
+
+.cover .rule {
+  width: 1.4in;
+  height: 2pt;
+  background: var(--accent);
+  margin: 0.22in auto;
 }
 
 .cover .week-title {
-  font-size: 16pt;
-  margin-top: 0.15in;
-  color: #444;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13pt;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5pt;
 }
 
 .cover .report-date {
-  font-size: 10pt;
-  color: #888;
+  font-family: "EB Garamond", serif;
+  font-style: italic;
+  font-size: 11pt;
+  color: var(--muted);
   margin-top: 0.3in;
 }
 
@@ -94,35 +228,89 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin: 0.15in 0 0.3in 0;
-  font-size: 9.5pt;
+  font-size: 10pt;
 }
 
 th, td {
   text-align: left;
-  padding: 4pt 6pt;
-  border-bottom: 0.5pt solid #ddd;
+  padding: 5pt 7pt;
+  border-bottom: 0.5pt solid var(--hairline);
 }
 
 th {
   font-family: "Helvetica Neue", Arial, sans-serif;
-  font-size: 8.5pt;
+  font-size: 8pt;
   text-transform: uppercase;
-  letter-spacing: 0.3pt;
-  color: #555;
-  border-bottom: 1pt solid #999;
+  letter-spacing: 0.4pt;
+  color: #fff;
+  background: var(--header-bg);
+  white-space: nowrap;
+}
+
+th:first-child { border-top-left-radius: 3pt; }
+th:last-child { border-top-right-radius: 3pt; }
+
+/* Standings has a custom last header with a sponsor-badge aside, so it gets a fixed layout
+   with per-column widths that sum to 100% — table-layout:auto would let a nowrap header push
+   the whole table past the page's printable width instead of respecting it. */
+.standings-table {
+  table-layout: fixed;
+}
+
+.standings-table th {
+  padding: 5pt 4pt;
+  overflow: hidden;
+}
+
+.standings-table td {
+  overflow-wrap: anywhere;
+}
+
+.standings-table th:nth-child(1) { width: 23%; }
+.standings-table th:nth-child(2) { width: 8%; }
+.standings-table th:nth-child(3) { width: 8%; }
+.standings-table th:nth-child(4) { width: 8%; }
+.standings-table th:nth-child(5) { width: 8%; }
+.standings-table th:nth-child(6) { width: 10%; }
+.standings-table th:nth-child(7) { width: 11%; font-size: 7pt; }
+.standings-table th:nth-child(8) {
+  width: 24%;
+  font-size: 7pt;
+}
+
+.sponsor-badge {
+  display: block;
+  margin-top: 3pt;
+  font-family: "EB Garamond", serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 6pt;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--header-bg);
+  background: var(--gold);
+  border-radius: 7pt;
+  padding: 1.5pt 6pt;
+  white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--row-tint);
 }
 
 tr.winner td {
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--accent-dark);
 }
 
 tr.division-header td {
-  background: #f2f2f2;
+  background: var(--gold);
   font-weight: bold;
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
   font-size: 8.5pt;
   text-transform: uppercase;
-  color: #555;
+  letter-spacing: 0.5pt;
+  color: #fff;
 }
 
 /* --- Scoreboard --- */
@@ -130,10 +318,20 @@ tr.division-header td {
   display: grid;
   grid-template-columns: 1fr 2em 1fr;
   align-items: baseline;
-  padding: 6pt 8pt;
-  margin-bottom: 4pt;
-  border: 0.5pt solid #ddd;
+  padding: 7pt 10pt;
+  margin-bottom: 5pt;
+  border: 0.5pt solid var(--hairline);
+  border-left: 3pt solid var(--hairline);
   border-radius: 3pt;
+}
+
+.matchup.home-winner {
+  border-left-color: var(--accent);
+}
+
+.matchup.away-winner {
+  border-right: 3pt solid var(--accent);
+  border-left-color: var(--hairline);
 }
 
 .matchup .team {
@@ -150,11 +348,16 @@ tr.division-header td {
 
 .matchup .vs {
   text-align: center;
-  color: #999;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 7.5pt;
+  letter-spacing: 0.5pt;
+  text-transform: uppercase;
+  color: var(--faint);
 }
 
 .matchup .team.winner {
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--accent-dark);
 }
 
 .matchup .score {
@@ -168,9 +371,15 @@ tr.division-header td {
   margin: 0 auto;
 }
 
+.letter h2 {
+  text-align: center;
+  border-bottom: none;
+}
+
 .letter .letter-date {
   text-align: right;
-  color: #666;
+  font-style: italic;
+  color: var(--muted);
   margin-bottom: 0.3in;
 }
 
@@ -179,13 +388,28 @@ tr.division-header td {
   text-align: justify;
 }
 
-.letter .signature {
+.letter .signature-block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10pt;
   margin-top: 0.4in;
+}
+
+.letter .signature-block .seal {
+  width: 0.5in;
+  height: 0.5in;
+}
+
+.letter .signature {
+  font-family: "EB Garamond", serif;
   font-style: italic;
+  font-size: 13pt;
+  color: var(--accent-dark);
 }
 
 /* --- Highlight tables --- */
 .highlight-detail {
-  color: #777;
+  color: var(--muted);
   font-size: 8.5pt;
 }
