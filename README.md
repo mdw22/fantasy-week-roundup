@@ -35,7 +35,11 @@ WeasyPrint (PDF rendering) needs system libraries beyond pip:
 
 `.env`, `config/league.yaml`, and `config/power_rankings_override.yaml` are all gitignored —
 they're account-specific and shouldn't be committed. `config/lore.md` *is* committed: it's an
-append-only running log the narrative generator reads for continuity and writes to after each run.
+append-only running log the narrative generator reads for continuity and writes to after each
+run. Each week's entry combines a factual, code-generated score summary with a short lore note
+Claude writes alongside the letter itself (any new nicknames, running jokes, or callbacks worth
+remembering) — so storylines the model invents can carry forward automatically, not just raw
+scores. If a week's letter didn't introduce anything new, only the factual summary is kept.
 
 ## Usage
 
@@ -67,6 +71,11 @@ space, not part of the committed report history. Note that each step re-fetches 
 independently (per the stateless design above), so if scores get corrected between the two steps,
 the rendered tables could reflect newer data than what the letter was written against — rare, but
 worth a re-read if you edit long after generating the draft.
+
+The draft file has a trailing section marked `===LORE NOTE===` below the letter — that's Claude's
+own short summary of anything worth remembering next week, and it's what feeds `config/lore.md`
+once you finalize with `--letter-file`. You can edit it just like the letter, or delete it
+entirely if you'd rather that week not add anything to the lore log.
 
 ## Running tests
 

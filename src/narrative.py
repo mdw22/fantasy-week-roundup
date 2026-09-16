@@ -16,7 +16,10 @@ from .stats import PlayerStat, TeamStat
 
 MODEL = "claude-opus-5"
 
-SYSTEM_PROMPT = """You are the ghostwriter for a fantasy football league's weekly recap letter. \
+LORE_NOTE_MARKER = "===LORE NOTE==="
+NOTHING_NEW_SENTINEL = "nothing new"
+
+SYSTEM_PROMPT = f"""You are the ghostwriter for a fantasy football league's weekly recap letter. \
 You write in the voice of the persona the user gives you, staying fully in the theme the user \
 gives you. You are given structured data about the week's matchups and standout performances, \
 plus a running "lore" log of nicknames and storylines from prior weeks.
@@ -32,9 +35,17 @@ Write one flowing narrative, roughly 500-800 words, that:
   into already appends a formatted signature block with the persona's name below the body, so
   signing it yourself would duplicate that.
 
-Output only the letter itself — no preamble, no meta-commentary. Write in plain prose: no
-markdown formatting of any kind (no **bold**, no headers, no bullet points) — the letter is
-rendered as plain paragraphs in a PDF, so markdown syntax would appear as literal asterisks."""
+Write in plain prose: no markdown formatting of any kind (no **bold**, no headers, no bullet
+points) — the letter is rendered as plain paragraphs in a PDF, so markdown syntax would appear
+as literal asterisks.
+
+After the letter, on its own line, write the exact marker "{LORE_NOTE_MARKER}", then on the
+following line write one or two short, plain (out-of-character, third person) sentences naming
+any new nicknames, running jokes, storylines, or callbacks you introduced this week that are
+worth remembering and possibly referencing in future weeks. If you didn't introduce anything
+worth carrying forward beyond the factual results, write "{NOTHING_NEW_SENTINEL}" instead.
+
+Output nothing else — no preamble, no meta-commentary before the letter or after the lore note."""
 
 
 def _team_stat_to_dict(stat: TeamStat) -> dict:
@@ -121,13 +132,25 @@ This week's structured data:
 Write this week's letter now."""
 
 
+def split_letter_and_lore_note(raw_text: str) -> tuple[str, str]:
+    """Split the model's raw response into (letter, lore_note). Falls back to treating the
+    whole thing as the letter with no note if the marker is missing — e.g. when a hand-edited
+    draft dropped it, or an older-format draft file is passed to --letter-file."""
+    if LORE_NOTE_MARKER in raw_text:
+        letter_part, _, note_part = raw_text.partition(LORE_NOTE_MARKER)
+        return letter_part.strip(), note_part.strip()
+    return raw_text.strip(), ""
+
+
 def generate_commissioners_letter(
     report: WeekReport,
     theme: str,
     commissioner_name: str,
     lore_path: str | Path,
     client: anthropic.Anthropic | None = None,
-) -> str:
+) -> tuple[str, str]:
+    """Returns (letter, lore_note) — lore_note is a short out-of-character summary of anything
+    new this week's letter introduced that's worth remembering, or "" if nothing was."""
     client = client or anthropic.Anthropic()
     week_summary = build_week_summary(report)
     lore_text = read_lore(lore_path)
@@ -139,7 +162,8 @@ def generate_commissioners_letter(
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
-    return next(block.text for block in response.content if block.type == "text")
+    raw_text = next(block.text for block in response.content if block.type == "text")
+    return split_letter_and_lore_note(raw_text)
 
 
 def summarize_matchups_for_lore(report: WeekReport) -> str:
@@ -152,3 +176,12 @@ def summarize_matchups_for_lore(report: WeekReport) -> str:
         loser = m.away_team_name if m.winner_name == m.home_team_name else m.home_team_name
         lines.append(f"{m.winner_name} beat {loser} {winner_score:.1f}-{loser_score:.1f}")
     return "; ".join(lines)
+
+
+def combine_lore_summary(factual_summary: str, lore_note: str) -> str:
+    """Merges the factual score summary with the model's own lore note, if it offered one
+    worth keeping (skips the "nothing new" sentinel and empty notes)."""
+    note = lore_note.strip()
+    if not note or note.lower().startswith(NOTHING_NEW_SENTINEL):
+        return factual_summary
+    return f"{factual_summary} — {note}"
