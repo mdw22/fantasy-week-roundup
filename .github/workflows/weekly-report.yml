@@ -1,11 +1,12 @@
 name: Weekly ESPN Fantasy Recap
 
 on:
-  schedule:
-    # 09:00 UTC = 5am ET (EDT) / 4am ET (EST) — early Tuesday morning, after ESPN
-    # finalizes Monday Night Football stats. A fixed UTC cron drifts by an hour
-    # across the DST boundary twice a year; adjust here if that matters to you.
-    - cron: "0 9 * * 2"
+  # The weekly schedule is turned off: reports are run manually (locally, or from the Actions tab
+  # via "Run workflow"). To turn it back on, restore this trigger under `on:`:
+  #   schedule:
+  #     # 09:00 UTC = 5am ET (EDT) / 4am ET (EST) — early Tuesday, after ESPN finalizes Monday
+  #     # Night Football. A fixed UTC cron drifts by an hour across the DST boundary.
+  #     - cron: "0 9 * * 2"
   workflow_dispatch:
     inputs:
       week:

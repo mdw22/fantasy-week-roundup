@@ -137,7 +137,9 @@ failing the report.
 
 ## Automation
 
-`.github/workflows/weekly-report.yml` runs the generator on a schedule (Tuesday mornings, after
-Monday Night Football stats finalize) and on manual dispatch, committing the new PDF and updated
-lore file back to the repo. Requires repo secrets: `LEAGUE_ID`, `SEASON_YEAR`, `ESPN_S2`, `SWID`,
-`ANTHROPIC_API_KEY`.
+`.github/workflows/weekly-report.yml` can generate the report on GitHub, committing the new PDF and
+updated lore file back to the repo. **The weekly schedule is currently turned off** — the workflow
+only runs when started by hand from the Actions tab ("Run workflow", with an optional week number).
+To re-enable the Tuesday-morning schedule, restore the `schedule:` trigger described in a comment at
+the top of the workflow file. Runs need the repo secrets `LEAGUE_ID`, `SEASON_YEAR`, `ESPN_S2`,
+`SWID`, `ANTHROPIC_API_KEY`.
