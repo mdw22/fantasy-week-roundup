@@ -44,15 +44,19 @@
 }
 
 :root {
-  --ink: #262220;
-  --muted: #6e6660;
-  --faint: #a39a91;
-  --accent: #7a1f2e;
-  --accent-dark: #56141f;
-  --gold: #a9812f;
-  --hairline: #e4ddd4;
-  --row-tint: #faf6f0;
-  --header-bg: #2b2320;
+  /* Game of Thrones palette: Lannister crimson and gold, Valyrian-steel iron, northern frost,
+     parchment tints. Text pairs all clear 4.5:1 on the grounds noted. */
+  --ink: #211c19;          /* body text; 16.9:1 on white */
+  --muted: #5c534c;        /* secondary text; 7.5:1 on white, 6.3:1 on --gold-tint */
+  --frost: #5f6c77;        /* quiet cool grey, on white only ("vs", page number, tag outline) */
+  --accent: #8a1c22;       /* Lannister crimson: headings, rules, winner edge */
+  --accent-dark: #5a0f17;  /* blood red: winning names, signature */
+  --gold: #c29a3b;         /* Lannister gold: FILLS and ornament only, never text on white */
+  --gold-deep: #7d5f16;    /* antique gold for gold-coloured TEXT on white (cover eyebrow) */
+  --gold-tint: #f6ebd0;    /* spotlight rows */
+  --hairline: #ded6c8;
+  --row-tint: #f9f4e9;     /* zebra rows: pale parchment */
+  --iron: #22252a;         /* table header cells (white text), sponsor-badge text on gold */
 }
 
 @page {
@@ -66,7 +70,7 @@
     content: counter(page) " / " counter(pages);
     font-family: "Helvetica Neue", Arial, sans-serif;
     font-size: 7.5pt;
-    color: var(--faint);
+    color: var(--frost);
   }
 }
 
@@ -157,7 +161,7 @@ h2 {
   justify-content: center;
   text-align: center;
   position: relative;
-  background: linear-gradient(180deg, #ffffff 0%, #ffffff 78%, #f7f1e8 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 78%, #efe4cc 100%);
 }
 
 .cover .corner {
@@ -188,7 +192,7 @@ h2 {
   font-size: 9pt;
   letter-spacing: 4pt;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-deep);
   margin-bottom: 0.15in;
 }
 
@@ -231,6 +235,20 @@ table {
   font-size: 10pt;
 }
 
+/* Repeats the header row when a table spans more than one printed page (e.g. a growing
+   Individual Highlights table on a heavy week) instead of leaving the continuation rows
+   unlabeled. */
+thead {
+  display: table-header-group;
+}
+
+/* Never split a single row across a page break (a wrapped cell can otherwise strand one line of
+   its text on the next page). */
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 th, td {
   text-align: left;
   padding: 5pt 7pt;
@@ -243,7 +261,7 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.4pt;
   color: #fff;
-  background: var(--header-bg);
+  background: var(--iron);
   white-space: nowrap;
 }
 
@@ -259,24 +277,25 @@ th:last-child { border-top-right-radius: 3pt; }
 
 .standings-table th {
   padding: 5pt 4pt;
-  overflow: hidden;
+  font-size: 7.5pt;
+  letter-spacing: 0.2pt;
+  /* A header that still doesn't fit wraps onto a second line rather than being clipped. */
+  white-space: normal;
 }
 
 .standings-table td {
   overflow-wrap: anywhere;
 }
 
+/* Widths sum to 100%; measured against the rendered headers so none clips. */
 .standings-table th:nth-child(1) { width: 23%; }
-.standings-table th:nth-child(2) { width: 8%; }
+.standings-table th:nth-child(2) { width: 9%; }
 .standings-table th:nth-child(3) { width: 8%; }
 .standings-table th:nth-child(4) { width: 8%; }
-.standings-table th:nth-child(5) { width: 8%; }
-.standings-table th:nth-child(6) { width: 10%; }
-.standings-table th:nth-child(7) { width: 11%; font-size: 7pt; }
-.standings-table th:nth-child(8) {
-  width: 24%;
-  font-size: 7pt;
-}
+.standings-table th:nth-child(5) { width: 9%; }
+.standings-table th:nth-child(6) { width: 11%; }
+.standings-table th:nth-child(7) { width: 13%; }
+.standings-table th:nth-child(8) { width: 19%; }
 
 .sponsor-badge {
   display: block;
@@ -287,7 +306,7 @@ th:last-child { border-top-right-radius: 3pt; }
   font-size: 6pt;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--header-bg);
+  color: var(--iron);
   background: var(--gold);
   border-radius: 7pt;
   padding: 1.5pt 6pt;
@@ -310,18 +329,64 @@ tr.division-header td {
   font-size: 8.5pt;
   text-transform: uppercase;
   letter-spacing: 0.5pt;
-  color: #fff;
+  color: var(--ink);
+}
+
+/* The Team + Individual Highlights tables share one page and it has almost no slack (an
+   unrostered Gamecock with a long stat line, or a couple of long team names, would otherwise
+   push a lone row onto an extra page), so both get slightly tighter cell padding and spacing
+   than the other tables. */
+.highlights-tables table {
+  margin-bottom: 0.2in;
+}
+
+.highlights-tables td {
+  padding-top: 3.5pt;
+  padding-bottom: 3.5pt;
+}
+
+/* Rookie Spotlight / Gamecock of the Week aren't ranked-by-score awards like the rows above
+   them (MVP, Top QB, ...) — they're league-wide, thematic spotlights, so they get a distinct
+   soft-gold tint (overrides the zebra stripe regardless of row parity, since the tint is
+   painted on the cells themselves) and a small heraldic marker ahead of the category label. */
+tr.spotlight-row td {
+  background: var(--gold-tint);
+}
+
+.spotlight-mark {
+  display: inline-block;
+  width: 5.5pt;
+  height: 5.5pt;
+  margin-right: 5pt;
+  background: var(--gold);
+  transform: rotate(45deg);
+  vertical-align: middle;
+}
+
+/* A league-wide spotlight (Gamecock of the Week, most weeks) that isn't rostered by anyone in
+   this league. A status tag, not just muted description text — italic + a thin outline pill,
+   deliberately understated next to the filled gold sponsor-badge pill above. */
+.unrostered-tag {
+  display: inline-block;
+  font-family: "EB Garamond", serif;
+  font-style: italic;
+  font-size: 8.5pt;
+  color: var(--muted);
+  border: 0.5pt solid var(--frost);
+  border-radius: 7pt;
+  padding: 1pt 7pt;
 }
 
 /* --- Scoreboard --- */
 .matchup {
   display: grid;
-  grid-template-columns: 1fr 2em 1fr;
+  grid-template-columns: 1fr 3.6em 2em 3.6em 1fr;
   align-items: baseline;
   padding: 7pt 10pt;
   margin-bottom: 5pt;
   border: 0.5pt solid var(--hairline);
   border-left: 3pt solid var(--hairline);
+  border-right: 3pt solid var(--hairline);  /* same width both sides so score columns line up across cards */
   border-radius: 3pt;
 }
 
@@ -330,12 +395,12 @@ tr.division-header td {
 }
 
 .matchup.away-winner {
-  border-right: 3pt solid var(--accent);
-  border-left-color: var(--hairline);
+  border-right-color: var(--accent);
 }
 
 .matchup .team {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .matchup .team:first-child {
@@ -352,7 +417,7 @@ tr.division-header td {
   font-size: 7.5pt;
   letter-spacing: 0.5pt;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--frost);
 }
 
 .matchup .team.winner {
@@ -363,6 +428,23 @@ tr.division-header td {
 .matchup .score {
   font-family: "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: tabular-nums;
+}
+
+/* Scores live in their own fixed-width columns flanking the "vs": home right-aligned and away
+   left-aligned, so the decimal points stack in a column down the whole scoreboard. */
+.matchup .score.home {
+  text-align: right;
+  padding-right: 0.5em;
+}
+
+.matchup .score.away {
+  text-align: left;
+  padding-left: 0.5em;
+}
+
+.matchup .score.winner {
+  font-weight: 600;
+  color: var(--accent-dark);
 }
 
 /* --- Letter --- */
@@ -376,16 +458,27 @@ tr.division-header td {
   border-bottom: none;
 }
 
+.letter .divider-ornament {
+  /* Narrower than the base .divider-ornament rule (the only other place that class is used is
+     this same letter section) to reclaim a little vertical space toward keeping a ~730-word
+     letter on one page — see the accompanying change note for how much this and the two
+     margin trims below actually reclaim; render-test before assuming it's enough. */
+  width: 1.8in;
+  margin: 0 auto 0.2in auto;
+}
+
 .letter .letter-date {
   text-align: right;
   font-style: italic;
   color: var(--muted);
-  margin-bottom: 0.3in;
+  margin-bottom: 0.2in;
 }
 
 .letter .letter-body p {
-  margin: 0 0 0.9em 0;
+  margin: 0 0 0.85em 0;
   text-align: justify;
+  orphans: 4;
+  widows: 4;
 }
 
 .letter .signature-block {
@@ -394,6 +487,8 @@ tr.division-header td {
   justify-content: flex-end;
   gap: 10pt;
   margin-top: 0.4in;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .letter .signature-block .seal {

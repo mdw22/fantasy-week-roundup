@@ -9,12 +9,12 @@
 {% set monogram = league.seal_monogram if league.seal_monogram else (league.commissioner_name.split() | last)[0] | upper %}
 <div class="wax-seal {{ css_class }}">
   <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="45" cy="45" r="42" fill="#5c1420" />
-    <circle cx="45" cy="45" r="42" fill="none" stroke="#3c0d15" stroke-width="2" />
-    <circle cx="45" cy="45" r="34" fill="none" stroke="#a9812f" stroke-width="1" stroke-dasharray="1.5,3" />
+    <circle cx="45" cy="45" r="42" fill="#6a1018" />
+    <circle cx="45" cy="45" r="42" fill="none" stroke="#3d0a0f" stroke-width="2" />
+    <circle cx="45" cy="45" r="34" fill="none" stroke="#c29a3b" stroke-width="1" stroke-dasharray="1.5,3" />
     <text x="45" y="57" text-anchor="middle" font-family="Cinzel, Georgia, serif" font-weight="700"
           font-size="{{ 36 if monogram|length <= 1 else 26 }}" letter-spacing="-1"
-          fill="#e9dcc0">{{ monogram }}</text>
+          fill="#ecdfba">{{ monogram }}</text>
   </svg>
 </div>
 {% endmacro %}
@@ -46,15 +46,13 @@
   <h2>Week {{ report.week }} Scoreboard</h2>
   {% for m in report.matchups %}
   <div class="matchup {{ 'home-winner' if m.winner_name == m.home_team_name else 'away-winner' }}">
-    <div class="team {{ 'winner' if m.winner_name == m.home_team_name else '' }}">
-      {{ display_name(m.home_team_name) }}
-      <span class="score">{{ "%.2f"|format(m.home_score) }}</span>
-    </div>
+    {# Five grid cells (name | score | vs | score | name) so both scores sit in fixed columns beside
+       the "vs" and line up down the page regardless of team-name length. #}
+    <div class="team {{ 'winner' if m.winner_name == m.home_team_name else '' }}">{{ display_name(m.home_team_name) }}</div>
+    <div class="score home {{ 'winner' if m.winner_name == m.home_team_name else '' }}">{{ "%.2f"|format(m.home_score) }}</div>
     <div class="vs">vs</div>
-    <div class="team {{ 'winner' if m.winner_name == m.away_team_name else '' }}">
-      <span class="score">{{ "%.2f"|format(m.away_score) }}</span>
-      {{ display_name(m.away_team_name) }}
-    </div>
+    <div class="score away {{ 'winner' if m.winner_name == m.away_team_name else '' }}">{{ "%.2f"|format(m.away_score) }}</div>
+    <div class="team {{ 'winner' if m.winner_name == m.away_team_name else '' }}">{{ display_name(m.away_team_name) }}</div>
   </div>
   {% endfor %}
 </div>
@@ -110,7 +108,7 @@
   </table>
 </div>
 
-<div class="section">
+<div class="section highlights-tables">
   <h2>Week {{ report.week }} Team Highlights</h2>
   <table>
     <thead>
@@ -131,19 +129,20 @@
   </table>
 
   <h2>Week {{ report.week }} Individual Highlights</h2>
-  <table>
+  <table class="individual-table">
     <thead>
-      <tr><th>Category</th><th>Player</th><th>Team</th><th>Points</th></tr>
+      <tr><th>Category</th><th>Player</th><th>Team</th><th>Performance</th></tr>
     </thead>
     <tbody>
       {% for label, stat in report.individual_highlights.items() %}
-      <tr>
-        <td>{{ label }}</td>
+      {% set is_spotlight = label in ["Rookie Spotlight", "Gamecock of the Week"] %}
+      <tr class="{{ 'spotlight-row' if is_spotlight else '' }}">
+        <td>{% if is_spotlight %}<span class="spotlight-mark"></span>{% endif %}{{ label }}</td>
         <td>{{ stat.player_name }} <span class="highlight-detail">({{ stat.position }} — {{ stat.pro_team }})</span></td>
         <td>
-          {% if stat.team_name %}{{ display_name(stat.team_name) }}{% else %}<span class="highlight-detail">unrostered</span>{% endif %}
+          {% if stat.team_name %}{{ display_name(stat.team_name) }}{% else %}<span class="unrostered-tag">Free agent</span>{% endif %}
         </td>
-        <td>{{ "%.2f"|format(stat.points) }}</td>
+        <td>{% if stat.detail %}{{ stat.detail }}{% else %}{{ "%.2f"|format(stat.points) }}{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>
