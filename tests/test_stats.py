@@ -266,3 +266,86 @@ def test_gamecock_of_the_week_missing_espn_id_never_matches_id_less_roster_playe
 
 def test_gamecock_of_the_week_none_without_candidates():
     assert stats.gamecock_of_the_week(_rookie_gamecock_box_scores(), []) is None
+
+
+def test_score_bars_sorted_descending_with_winner_flags_and_relative_width():
+    bars = stats.score_bars(make_box_scores())
+    assert [b.score for b in bars] == sorted((b.score for b in bars), reverse=True)
+    assert bars[0].pct == 100.0
+    by_name = {b.team_name: b for b in bars}
+    assert by_name["House Stark"].won and not by_name["House Lannister"].won  # 120.5 vs 90.0
+    assert by_name["House Targaryen"].won and not by_name["House Greyjoy"].won  # 95.0 vs 94.0
+    assert abs(by_name["House Lannister"].pct - 90.0 / 120.5 * 100) < 1e-9
+
+
+def test_score_bars_tie_goes_to_home_team_and_handles_empty():
+    tie = FakeBoxScore(FakeTeam("H"), 100.0, 0, FakeTeam("A"), 100.0, 0)
+    bars = {b.team_name: b for b in stats.score_bars([tie])}
+    assert bars["H"].won and not bars["A"].won
+    assert stats.score_bars([]) == []
+
+
+def _four_team_week(m1, m2):
+    (a, a_pts, b, b_pts), (c, c_pts, d, d_pts) = m1, m2
+    return [
+        FakeBoxScore(FakeTeam(a), a_pts, 0, FakeTeam(b), b_pts, 0),
+        FakeBoxScore(FakeTeam(c), c_pts, 0, FakeTeam(d), d_pts, 0),
+    ]
+
+
+def test_luckiest_win_and_unluckiest_loss():
+    # T1 (80) beat T2 (70) but only beat one team all-play; T3 (120) lost to T4 (130) yet beat two.
+    lucky, unlucky = stats.luckiest_win_unluckiest_loss(
+        _four_team_week(("T1", 80.0, "T2", 70.0), ("T3", 120.0, "T4", 130.0))
+    )
+    assert lucky.team_name == "T1" and lucky.display == "1-2" and lucky.value == 1.0
+    assert lucky.detail == "won despite ranking 3rd of 4 in scoring"
+    assert unlucky.team_name == "T3" and unlucky.display == "2-1"
+    assert unlucky.detail == "lost despite ranking 2nd of 4 in scoring"
+
+
+def test_luck_rows_are_omitted_when_the_claim_would_be_false():
+    # Every winner is also a top-half scorer, every loser a bottom-half scorer: nobody was lucky.
+    lucky, unlucky = stats.luckiest_win_unluckiest_loss(
+        _four_team_week(("T1", 100.0, "T2", 10.0), ("T3", 90.0, "T4", 20.0))
+    )
+    assert lucky is None and unlucky is None
+
+
+def test_ordinal_handles_teens_and_twenties():
+    assert [stats._ordinal(n) for n in (1, 2, 3, 4, 11, 12, 13, 14, 21, 22, 23)] == [
+        "1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "14th", "21st", "22nd", "23rd",
+    ]
+
+
+def _week(home, away, home_lineup, away_lineup):
+    return [FakeBoxScore(FakeTeam(home), 0, 0, FakeTeam(away), 0, 0, home_lineup, away_lineup)]
+
+
+def test_season_top_scorers_sums_starters_across_weeks_and_ignores_bench():
+    by_week = {
+        1: _week("A", "B",
+                 [FakePlayer("Star", "WR", 20.0, "WR", "SF", player_id=1), FakePlayer("Benchie", "RB", 50.0, "BE", "DAL", player_id=2)],
+                 [FakePlayer("Other", "QB", 25.0, "QB", "BUF", player_id=3)]),
+        2: _week("A", "B",
+                 [FakePlayer("Star", "WR", 18.0, "WR", "SF", player_id=1), FakePlayer("Benchie", "RB", 40.0, "BE", "DAL", player_id=2)],
+                 [FakePlayer("Other", "QB", 10.0, "QB", "BUF", player_id=3)]),
+    }
+    top = stats.season_top_scorers(by_week, limit=3)
+    assert [(s.player_name, s.points) for s in top] == [("Star", 38.0), ("Other", 35.0)]  # bench points never count
+    assert top[0].team_name == "A" and top[0].pro_team == "SF" and top[0].position == "WR"
+
+
+def test_season_top_scorers_follows_a_player_who_changed_teams():
+    by_week = {
+        1: _week("A", "B", [FakePlayer("Traded", "RB", 10.0, "RB", "NYJ", player_id=9)], []),
+        2: _week("C", "D", [FakePlayer("Traded", "RB", 12.0, "RB", "NYJ", player_id=9)], []),
+    }
+    top = stats.season_top_scorers(by_week)
+    assert top[0].points == 22.0 and top[0].team_name == "C"  # one running total, latest team credited
+
+
+def test_season_top_scorers_limit_and_empty():
+    assert stats.season_top_scorers({}) == []
+    by_week = {1: _week("A", "B", [FakePlayer(f"P{i}", "WR", float(i), "WR", player_id=i) for i in range(1, 8)], [])}
+    assert [s.player_name for s in stats.season_top_scorers(by_week, limit=3)] == ["P7", "P6", "P5"]

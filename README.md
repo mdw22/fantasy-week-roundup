@@ -94,6 +94,23 @@ See `src/espn_client.py` (league connection + raw fetches), `src/stats.py` (high
 (assembles one `WeekReport` per run), `src/render.py` (Jinja2 + WeasyPrint → PDF), and
 `src/main.py` (CLI entry point).
 
+## What's in each report
+
+Cover, then scoreboard (with a "Week N at a Glance" score bar chart), standings, team highlights,
+individual highlights, and the Commissioner's Letter.
+
+- **Rank movement** — Power Rank and Mike's Rankings show how many places a team moved since last
+  week. ESPN's power rankings are recomputed from each team's scoring history through a given week
+  (`espn_api` `power_rankings(week)`), so last week's ranking is available on demand and **no state
+  is stored between runs**. Week 1 shows no markers. Mike's Rankings compares against last week's
+  manual override where a team has one, otherwise last week's algorithmic rank.
+- **Luckiest Win / Unluckiest Loss** — from the week's all-play record (how many of the other 13
+  teams' scores a team would have beaten). A row only appears when its "despite ranking Nth of 14"
+  claim is true.
+- **Season Leaders** (Week 2 onward) — top 3 teams by season points and top 3 players by season
+  fantasy points, counting only points earned while starting (same rule as Individual MVP). This
+  fetches every week's box scores each run (~0.6s per week, about 10s for a full season).
+
 ## Supplemental NFL data
 
 **Rookie Spotlight** and **Gamecock of the Week** are the two league-wide awards: they use

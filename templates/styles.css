@@ -332,19 +332,6 @@ tr.division-header td {
   color: var(--ink);
 }
 
-/* The Team + Individual Highlights tables share one page and it has almost no slack (an
-   unrostered Gamecock with a long stat line, or a couple of long team names, would otherwise
-   push a lone row onto an extra page), so both get slightly tighter cell padding and spacing
-   than the other tables. */
-.highlights-tables table {
-  margin-bottom: 0.2in;
-}
-
-.highlights-tables td {
-  padding-top: 3.5pt;
-  padding-bottom: 3.5pt;
-}
-
 /* Rookie Spotlight / Gamecock of the Week aren't ranked-by-score awards like the rows above
    them (MVP, Top QB, ...) — they're league-wide, thematic spotlights, so they get a distinct
    soft-gold tint (overrides the zebra stripe regardless of row parity, since the tint is
@@ -445,6 +432,140 @@ tr.spotlight-row td {
 .matchup .score.winner {
   font-weight: 600;
   color: var(--accent-dark);
+}
+
+/* --- Rank movement marker (Power Rank / Mike's Rankings): improved = gold-deep, fell = crimson,
+   unchanged = frost. No marker at all when there is no prior week to compare. --- */
+.move {
+  margin-left: 3pt;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 7pt;
+  white-space: nowrap;
+}
+
+.move.up { color: var(--gold-deep); }
+.move.down { color: var(--accent); }
+.move.same { color: var(--frost); }
+
+.move .tri {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 1.5pt;
+  vertical-align: 0.5pt;
+  border-left: 2.2pt solid transparent;
+  border-right: 2.2pt solid transparent;
+}
+
+.move .tri.up { border-bottom: 4pt solid currentColor; }
+.move .tri.down { border-top: 4pt solid currentColor; }
+
+/* --- Secondary sub-heading: a block that lives inside an existing page rather than starting a new
+   section. Subordinate to h2 (no bottom rule). --- */
+h3.subhead {
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 12.5pt;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.3in 0 0.15in 0;
+}
+
+/* --- "Week N at a Glance" bar chart: plain flex rows, bar width is a percentage of the top score --- */
+.score-chart .chart-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3pt;
+}
+
+.score-chart .chart-label {
+  width: 28%;
+  padding-right: 8pt;
+  font-size: 9pt;
+  line-height: 1.15;
+  /* Never clip a team name: a pathological one wraps onto a second line instead. */
+  overflow-wrap: anywhere;
+}
+
+.score-chart .chart-label.won {
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
+.score-chart .chart-track {
+  width: 72%;
+  display: flex;
+  align-items: center;
+}
+
+.score-chart .chart-bar {
+  height: 11pt;
+  flex: none;
+  box-sizing: border-box;
+}
+
+.score-chart .chart-bar.won {
+  background: var(--accent);
+}
+
+.score-chart .chart-bar.lost {
+  background: var(--row-tint);
+  border: 1px solid var(--hairline);
+}
+
+.score-chart .chart-value {
+  margin-left: 5pt;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5pt;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* --- Season Leaders: a light aside under the standings, not another bordered table --- */
+.leaders {
+  display: flex;
+  gap: 0.4in;
+}
+
+.leaders .leaders-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.leaders .leaders-caption {
+  font-size: 8.5pt;
+  letter-spacing: 0.4pt;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2pt;
+}
+
+.leaders .leader-row {
+  display: flex;
+  align-items: baseline;
+  padding: 1.5pt 0;
+}
+
+.leaders .leader-rank {
+  width: 16pt;
+  flex: none;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  color: var(--gold-deep);
+}
+
+.leaders .leader-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.leaders .leader-value {
+  flex: none;
+  padding-left: 8pt;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 9.5pt;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
 }
 
 /* --- Letter --- */

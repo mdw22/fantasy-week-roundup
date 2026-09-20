@@ -17,6 +17,15 @@ class TeamStat:
     team_name: str
     value: float
     detail: str = ""
+    display: str = ""  # shown in the Value column instead of the formatted number when non-empty
+
+
+@dataclass
+class ScoreBar:
+    team_name: str
+    score: float
+    won: bool
+    pct: float  # score as a percentage of the week's highest score (0-100)
 
 
 @dataclass
@@ -29,12 +38,62 @@ class PlayerStat:
     detail: str = ""
 
 
+@dataclass
+class SeasonScorer:
+    player_name: str
+    team_name: str  # the fantasy team that most recently started this player
+    pro_team: str
+    position: str
+    points: float
+
+
+def season_top_scorers(box_scores_by_week: dict[int, list], limit: int = 3) -> list[SeasonScorer]:
+    """Top players by fantasy points across the season so far, counting only points earned while
+    in a starting lineup -- the same "starter" rule as Individual MVP and the Top-position
+    awards, so a player's total is what actually counted for a team. Summed by ESPN player ID,
+    so a player who changes fantasy teams keeps one running total (credited to the team that
+    started him most recently). Bench/IR weeks don't count."""
+    totals: dict[object, float] = {}
+    latest: dict[object, tuple[int, object, str]] = {}  # key -> (week, player, team_name)
+    for week in sorted(box_scores_by_week):
+        for team_name, player in _iter_lineup_players(box_scores_by_week[week]):
+            if player.lineupSlot in BENCH_SLOTS:
+                continue
+            key = getattr(player, "playerId", None) or player.name
+            totals[key] = totals.get(key, 0.0) + player.points
+            latest[key] = (week, player, team_name)
+    ranked = sorted(totals.items(), key=lambda kv: -kv[1])[:limit]
+    return [
+        SeasonScorer(latest[key][1].name, latest[key][2], latest[key][1].proTeam, latest[key][1].position, pts)
+        for key, pts in ranked
+    ]
+
+
 def team_scores(box_scores: list) -> dict[str, float]:
     scores: dict[str, float] = {}
     for bs in box_scores:
         scores[bs.home_team.team_name] = bs.home_score
         scores[bs.away_team.team_name] = bs.away_score
     return scores
+
+
+def score_bars(box_scores: list) -> list[ScoreBar]:
+    """Every team's score for the week, highest first, for the "Week N at a Glance" bar chart.
+    `won` mirrors the scoreboard's winner logic (a tie goes to the home team). `pct` is relative to
+    the week's top score so the bars scale to the data."""
+    entries = []
+    for bs in box_scores:
+        home_won = bs.home_score >= bs.away_score
+        entries.append((bs.home_team.team_name, bs.home_score, home_won))
+        entries.append((bs.away_team.team_name, bs.away_score, not home_won))
+    if not entries:
+        return []
+    top = max(score for _, score, _ in entries)
+    bars = [
+        ScoreBar(name, score, won, (score / top * 100) if top > 0 else 0.0)
+        for name, score, won in entries
+    ]
+    return sorted(bars, key=lambda b: -b.score)
 
 
 def team_projected(box_scores: list) -> dict[str, float]:
@@ -252,3 +311,54 @@ def gamecock_of_the_week(box_scores: list, candidates: list) -> PlayerStat | Non
     return PlayerStat(
         best.name, team_name, best.pro_team, best.position, best.score, detail=best.detail
     )
+
+
+def _ordinal(n: int) -> str:
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+def luckiest_win_unluckiest_loss(box_scores: list) -> tuple[TeamStat | None, TeamStat | None]:
+    """All-play luck for the week. A team's all-play record is how many of the other teams' scores
+    it beat this week, as if it had played everyone.
+
+    - Luckiest Win: the matchup winner with the fewest all-play wins (won its game while scoring
+      near the bottom of the league).
+    - Unluckiest Loss: the matchup loser with the most all-play wins (outscored most of the
+      league and still lost).
+
+    Each is only returned when its "despite ranking Nth" claim is actually true -- the lucky
+    winner has to rank in the bottom half of the field, the unlucky loser in the top half --
+    otherwise that row is None and the report leaves it out. Ties in all-play wins go to the
+    lower score (lucky) / higher score (unlucky). `value` is the all-play wins; `display` the
+    "W-L" record."""
+    scores = team_scores(box_scores)
+    n = len(scores)
+    if n < 2:
+        return None, None
+    winners, losers = set(), set()
+    for bs in box_scores:
+        home_won = bs.home_score >= bs.away_score
+        winners.add(bs.home_team.team_name if home_won else bs.away_team.team_name)
+        losers.add(bs.away_team.team_name if home_won else bs.home_team.team_name)
+
+    def all_play_wins(name: str) -> int:
+        return sum(1 for other, s in scores.items() if other != name and s < scores[name])
+
+    def scoring_rank(name: str) -> int:
+        return 1 + sum(1 for s in scores.values() if s > scores[name])
+
+    def build(name: str, verb: str) -> TeamStat:
+        wins = all_play_wins(name)
+        return TeamStat(
+            name, float(wins),
+            detail=f"{verb} despite ranking {_ordinal(scoring_rank(name))} of {n} in scoring",
+            display=f"{wins}-{n - 1 - wins}",
+        )
+
+    lucky = min(winners, key=lambda nm: (all_play_wins(nm), scores[nm]), default=None)
+    unlucky = max(losers, key=lambda nm: (all_play_wins(nm), scores[nm]), default=None)
+    half = (n - 1) / 2
+    luckiest = build(lucky, "won") if lucky is not None and all_play_wins(lucky) < half else None
+    unluckiest = build(unlucky, "lost") if unlucky is not None and all_play_wins(unlucky) > half else None
+    return luckiest, unluckiest

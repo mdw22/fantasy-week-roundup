@@ -5,6 +5,18 @@
 {{ (league.team_nickname_overrides.get(team_name, team_name) if league.team_nickname_overrides else team_name) | clean_team_name }}
 {%- endmacro %}
 
+{# Rank-movement marker. `change` = positions gained since last week (None = no prior value, so no marker
+   at all). The triangle is drawn with CSS borders so it doesn't depend on any font having the glyph. #}
+{% macro move(change) -%}
+{%- if change is not none -%}
+<span class="move {{ 'up' if change > 0 else ('down' if change < 0 else 'same') }}">
+  {%- if change > 0 -%}<i class="tri up"></i>{{ change }}
+  {%- elif change < 0 -%}<i class="tri down"></i>{{ -change }}
+  {%- else -%}—{%- endif -%}
+</span>
+{%- endif -%}
+{%- endmacro %}
+
 {% macro wax_seal(css_class) %}
 {% set monogram = league.seal_monogram if league.seal_monogram else (league.commissioner_name.split() | last)[0] | upper %}
 <div class="wax-seal {{ css_class }}">
@@ -55,6 +67,21 @@
     <div class="team {{ 'winner' if m.winner_name == m.away_team_name else '' }}">{{ display_name(m.away_team_name) }}</div>
   </div>
   {% endfor %}
+
+  {% if report.score_bars %}
+  <h3 class="subhead">Week {{ report.week }} at a Glance</h3>
+  <div class="score-chart">
+    {% for bar in report.score_bars %}
+    <div class="chart-row">
+      <div class="chart-label {{ 'won' if bar.won else '' }}">{{ display_name(bar.team_name) }}</div>
+      <div class="chart-track">
+        <div class="chart-bar {{ 'won' if bar.won else 'lost' }}" style="width: {{ '%.1f'|format(bar.pct * 0.86) }}%"></div>
+        <span class="chart-value">{{ "%.2f"|format(bar.score) }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 <div class="section">
@@ -85,8 +112,8 @@
           <td>{{ "%.2f"|format(row.points_against) }}</td>
           <td>{{ row.streak }}</td>
           <td>{{ "%.1f%%"|format(row.playoff_pct) if row.playoff_pct is not none else "—" }}</td>
-          <td>{{ row.power_rank if row.power_rank is not none else "—" }}</td>
-          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}</td>
+          <td>{{ row.power_rank if row.power_rank is not none else "—" }}{{ move(row.power_rank_change) }}</td>
+          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}{{ move(row.commissioner_rank_change) }}</td>
         </tr>
         {% endfor %}
         {% endfor %}
@@ -99,16 +126,42 @@
           <td>{{ "%.2f"|format(row.points_against) }}</td>
           <td>{{ row.streak }}</td>
           <td>{{ "%.1f%%"|format(row.playoff_pct) if row.playoff_pct is not none else "—" }}</td>
-          <td>{{ row.power_rank if row.power_rank is not none else "—" }}</td>
-          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}</td>
+          <td>{{ row.power_rank if row.power_rank is not none else "—" }}{{ move(row.power_rank_change) }}</td>
+          <td>{{ row.commissioner_rank if row.commissioner_rank is not none else "—" }}{{ move(row.commissioner_rank_change) }}</td>
         </tr>
         {% endfor %}
       {% endif %}
     </tbody>
   </table>
+
+  {% if report.season_leaders %}
+  <h3 class="subhead">Season Leaders</h3>
+  <div class="leaders">
+    <div class="leaders-col">
+      <div class="leaders-caption">Top Teams</div>
+      {% for name, points in report.season_leaders.top_teams %}
+      <div class="leader-row">
+        <span class="leader-rank">{{ loop.index }}</span>
+        <span class="leader-name">{{ display_name(name) }}</span>
+        <span class="leader-value">{{ "%.2f"|format(points) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="leaders-col">
+      <div class="leaders-caption">Top Scorers</div>
+      {% for p in report.season_leaders.top_scorers %}
+      <div class="leader-row">
+        <span class="leader-rank">{{ loop.index }}</span>
+        <span class="leader-name">{{ p.player_name }} <span class="highlight-detail">({{ p.position }} — {{ p.pro_team }})</span></span>
+        <span class="leader-value">{{ "%.2f"|format(p.points) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 
-<div class="section highlights-tables">
+<div class="section">
   <h2>Week {{ report.week }} Team Highlights</h2>
   <table>
     <thead>
@@ -120,14 +173,16 @@
         <td>{{ label }}</td>
         <td>{{ display_name(stat.team_name) }}</td>
         <td>
-          {{ "%.2f"|format(stat.value) }}
+          {% if stat.display %}{{ stat.display }}{% else %}{{ "%.2f"|format(stat.value) }}{% endif %}
           {% if stat.detail %}<div class="highlight-detail">{{ stat.detail }}</div>{% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 
+<div class="section">
   <h2>Week {{ report.week }} Individual Highlights</h2>
   <table class="individual-table">
     <thead>
