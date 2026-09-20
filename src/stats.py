@@ -26,6 +26,7 @@ class PlayerStat:
     pro_team: str
     position: str
     points: float
+    detail: str = ""
 
 
 def team_scores(box_scores: list) -> dict[str, float]:
@@ -207,18 +208,47 @@ def bench_mvp(box_scores: list) -> PlayerStat | None:
     return PlayerStat(player.name, team_name, player.proTeam, player.position, player.points)
 
 
-def rookie_spotlight(box_scores: list) -> PlayerStat | None:
-    """TODO (Phase 2): espn_api's Player objects don't reliably carry a rookie-year
-    flag. Needs cross-referencing player IDs against nflreadpy roster data to
-    determine rookie status. Stubbed until that lookup is built."""
-    return None
+def _rostered_team_by_espn_id(box_scores: list) -> dict[int, str]:
+    """ESPN player ID -> fantasy team name, for everyone on a lineup (starter or bench) this week."""
+    return {
+        p.playerId: team_name
+        for team_name, p in _iter_lineup_players(box_scores)
+        if getattr(p, "playerId", None) is not None
+    }
 
 
-def gamecock_of_the_week(week: int) -> PlayerStat | None:
-    """TODO (Phase 2): needs nflreadpy player/roster data filtered to
-    college == "South Carolina", that player's box score stats for the week, and
-    the notability heuristic described in the design spec (fantasy points for
-    offensive players; tackles + 2*sacks + 3*(INTs/forced fumbles) + blocked kicks
-    for defenders). Credit the fantasy team if the player happens to be rostered
-    in this league, otherwise show the stat line with no team credit."""
-    return None
+def rookie_spotlight(box_scores: list, candidates: list) -> PlayerStat | None:
+    """Best NFL performance this week by a rookie QB/RB/WR/TE, league-wide -- rostered by a fantasy
+    team (starter or bench) or not. `candidates` is the list of
+    nfl_supplemental.RookieCandidate for this week, scored with nflverse PPR points (exactly this
+    league's skill scoring). Credits the fantasy team if that rookie happens to be rostered here
+    (matched by ESPN player ID); otherwise the team is left blank and the template shows the
+    "Free agent" pill, same as Gamecock of the Week."""
+    if not candidates:
+        return None
+    best = max(candidates, key=lambda c: c.points)
+    return PlayerStat(
+        best.name,
+        _rostered_team_by_espn_id(box_scores).get(best.espn_id),
+        best.pro_team,
+        best.position,
+        best.points,
+    )
+
+
+def gamecock_of_the_week(box_scores: list, candidates: list) -> PlayerStat | None:
+    """Best NFL performance this week, any position, by a University of South
+    Carolina alum -- league-wide, not limited to this fantasy league's rosters.
+    `candidates` is the list of nfl_supplemental.GamecockCandidate already scored
+    and described for this week (see nfl_supplemental.get_gamecock_candidates).
+    Credits the fantasy team if that player happens to be rostered here (matched
+    by ESPN player ID); otherwise the team is left blank, same as the sample
+    report's convention for a non-rostered spotlight."""
+    if not candidates:
+        return None
+    best = max(candidates, key=lambda c: c.score)
+    rostered_by = _rostered_team_by_espn_id(box_scores)
+    team_name = rostered_by.get(best.espn_id)
+    return PlayerStat(
+        best.name, team_name, best.pro_team, best.position, best.score, detail=best.detail
+    )

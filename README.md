@@ -94,11 +94,26 @@ See `src/espn_client.py` (league connection + raw fetches), `src/stats.py` (high
 (assembles one `WeekReport` per run), `src/render.py` (Jinja2 + WeasyPrint → PDF), and
 `src/main.py` (CLI entry point).
 
+## Supplemental NFL data
+
+**Rookie Spotlight** and **Gamecock of the Week** are the two league-wide awards: they use
+`nflreadpy` (via `src/nfl_supplemental.py`) for facts ESPN doesn't expose, and either can go to
+a player no fantasy team rosters (the report shows a "Free agent" tag).
+
+- **Rookie Spotlight** — best rookie QB/RB/WR/TE of the week (`years_exp == 0`), scored with
+  nflverse's `fantasy_points_ppr`, which matches this league's ESPN scoring exactly for those
+  positions (verified 192/192 on rostered players). Rookies with no ESPN ID in nflverse (mostly
+  undrafted/practice-squad players) are skipped, since we can't tell whether a team rosters them.
+- **Gamecock of the Week** — South Carolina alumni (any school in a player's semicolon-delimited
+  `college` list, so transfers count) with their weekly defensive/offensive stat lines.
+
+Every other individual award (MVP, Top QB/RB/WR/TE/D-ST/K, Bench MVP) deliberately stays
+best-rostered-*starter* (Bench MVP: rostered bench), computed from ESPN box scores. If an nflreadpy
+lookup fails or its schema changes, that award is skipped with a printed warning rather than
+failing the report.
+
 ## Known gaps (Phase 2)
 
-- **Rookie Spotlight** and **Gamecock of the Week** are stubbed in `src/stats.py` — both need
-  cross-referencing ESPN roster data against `nflreadpy` (rookie-year flags; South Carolina alums
-  and their weekly stat lines), which isn't wired up yet.
 - **Season-finale bonus sections** (PF trendlines, All-Fantasy Team, season appendix, etc.) have
   a template hook (`report.is_season_finale`) but no data yet — `report_data.py` doesn't populate
   `WeekReport.season_extras`.

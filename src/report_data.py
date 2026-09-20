@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import espn_client, stats
+from . import espn_client, nfl_supplemental, stats
 
 
 @dataclass
@@ -58,6 +58,48 @@ def load_power_rankings_override(path: str | Path | None, week: int) -> dict[str
     with open(path) as f:
         data = yaml.safe_load(f) or {}
     return data.get(f"week_{week}", {})
+
+
+# Display order for the per-position "Top X" awards in Individual Highlights. Any position not
+# listed (shouldn't happen in standard ESPN leagues) is appended alphabetically after these.
+POSITION_ORDER = ["QB", "RB", "WR", "TE", "D/ST", "K"]
+
+
+def ordered_individual_highlights(
+    mvp,
+    top_by_position: dict,
+    bench,
+    rookie,
+    gamecock,
+) -> dict:
+    """Individual Highlights in display order: MVP, then the position winners (QB, RB, WR, TE,
+    D/ST, K), then Bench MVP, then the two spotlight awards (Rookie, Gamecock). Missing awards
+    (None) are dropped."""
+    ordered = {"Individual MVP": mvp}
+    known = [pos for pos in POSITION_ORDER if pos in top_by_position]
+    extras = sorted(pos for pos in top_by_position if pos not in POSITION_ORDER)
+    for position in known + extras:
+        ordered[f"Top {position}"] = top_by_position[position]
+    ordered["Bench MVP"] = bench
+    ordered["Rookie Spotlight"] = rookie
+    ordered["Gamecock of the Week"] = gamecock
+    return {k: v for k, v in ordered.items() if v is not None}
+
+
+def _safe_rookie_candidates(season: int, week: int) -> list:
+    try:
+        return nfl_supplemental.get_rookie_candidates(season, week)
+    except Exception as exc:  # noqa: BLE001 - a supplemental lookup failing
+        print(f"warning: Rookie Spotlight lookup failed ({exc}); skipping for this week.")
+        return []
+
+
+def _safe_gamecock_candidates(season: int, week: int) -> list:
+    try:
+        return nfl_supplemental.get_gamecock_candidates(season, week)
+    except Exception as exc:  # noqa: BLE001 - should never take down the whole report
+        print(f"warning: Gamecock of the Week lookup failed ({exc}); skipping for this week.")
+        return []
 
 
 def build_week_report(
@@ -141,16 +183,10 @@ def build_week_report(
     mvp = stats.individual_mvp(box_scores)
     top_by_position = stats.top_scorer_by_position(box_scores)
     bench = stats.bench_mvp(box_scores)
-    rookie = stats.rookie_spotlight(box_scores)
-    gamecock = stats.gamecock_of_the_week(week)
+    rookie = stats.rookie_spotlight(box_scores, _safe_rookie_candidates(league.year, week))
+    gamecock = stats.gamecock_of_the_week(box_scores, _safe_gamecock_candidates(league.year, week))
 
-    individual_highlights = {"Individual MVP": mvp}
-    for position, stat in sorted(top_by_position.items()):
-        individual_highlights[f"Top {position}"] = stat
-    individual_highlights["Bench MVP"] = bench
-    individual_highlights["Rookie Spotlight"] = rookie
-    individual_highlights["Gamecock of the Week"] = gamecock
-    individual_highlights = {k: v for k, v in individual_highlights.items() if v is not None}
+    individual_highlights = ordered_individual_highlights(mvp, top_by_position, bench, rookie, gamecock)
 
     return WeekReport(
         week=week,

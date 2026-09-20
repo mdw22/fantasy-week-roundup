@@ -7,3 +7,5 @@ config/league.yaml
 config/power_rankings_override.yaml
 drafts/
 .DS_Store
+CLAUDE.md
+DESIGNER_REPORT.md

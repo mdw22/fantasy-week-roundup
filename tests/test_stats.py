@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import stats
+from src import nfl_supplemental, stats
 
 
 class FakeTeam:
@@ -18,7 +18,8 @@ class FakeTeam:
 
 
 class FakePlayer:
-    def __init__(self, name, position, points, lineup_slot, pro_team="NFL"):
+    def __init__(self, name, position, points, lineup_slot, pro_team="NFL", player_id=None):
+        self.playerId = player_id
         self.name = name
         self.position = position
         self.points = points
@@ -189,3 +190,79 @@ def test_bench_mvp():
     bench = stats.bench_mvp(box_scores)
     assert bench.player_name == "Robb Stark"
     assert bench.points == 15.0
+
+
+def _rookie_gamecock_box_scores():
+    return [
+        FakeBoxScore(
+            home_team=FakeTeam("House Stark"), home_score=0, home_projected=0,
+            away_team=FakeTeam("House Lannister"), away_score=0, away_projected=0,
+            home_lineup=[
+                FakePlayer("Vet Starter", "QB", 40.0, "QB", player_id=1),
+                FakePlayer("Bench Rookie", "RB", 18.0, "BE", player_id=2),
+            ],
+            away_lineup=[
+                FakePlayer("Starter Rookie", "WR", 12.0, "WR", player_id=3),
+                FakePlayer("No Id Player", "TE", 50.0, "TE"),
+            ],
+        )
+    ]
+
+
+def _rookie(name, points, espn_id, position="WR", pro_team="MIA"):
+    return nfl_supplemental.RookieCandidate(
+        espn_id=espn_id, name=name, position=position, pro_team=pro_team, points=points
+    )
+
+
+def test_rookie_spotlight_picks_highest_league_wide_and_credits_rostering_team():
+    # id 2 is a benched rookie on House Stark; id 3 a starter on House Lannister
+    result = stats.rookie_spotlight(
+        _rookie_gamecock_box_scores(), [_rookie("Bench Rookie", 18.0, 2), _rookie("Starter Rookie", 12.0, 3)]
+    )
+    assert result.player_name == "Bench Rookie"
+    assert result.team_name == "House Stark"
+    assert result.points == 18.0
+    assert result.pro_team == "MIA" and result.position == "WR"
+
+
+def test_rookie_spotlight_unrostered_rookie_can_win_and_has_no_team():
+    result = stats.rookie_spotlight(
+        _rookie_gamecock_box_scores(), [_rookie("Free Agent Rookie", 30.0, 999), _rookie("Bench Rookie", 18.0, 2)]
+    )
+    assert result.player_name == "Free Agent Rookie"
+    assert result.team_name is None
+
+
+def test_rookie_spotlight_none_without_candidates():
+    assert stats.rookie_spotlight(_rookie_gamecock_box_scores(), []) is None
+
+
+def _candidate(name, score, espn_id):
+    return nfl_supplemental.GamecockCandidate(
+        espn_id=espn_id, name=name, position="LB", pro_team="SEA", score=score, detail="13 tkl"
+    )
+
+
+def test_gamecock_of_the_week_credits_rostering_team_and_carries_detail():
+    result = stats.gamecock_of_the_week(
+        _rookie_gamecock_box_scores(), [_candidate("Low", 5.0, 1), _candidate("High", 13.0, 3)]
+    )
+    assert result.player_name == "High"
+    assert result.team_name == "House Lannister"
+    assert result.detail == "13 tkl"
+
+
+def test_gamecock_of_the_week_unrostered_has_no_team():
+    result = stats.gamecock_of_the_week(_rookie_gamecock_box_scores(), [_candidate("Free", 9.0, 777)])
+    assert result.team_name is None
+
+
+def test_gamecock_of_the_week_missing_espn_id_never_matches_id_less_roster_player():
+    # "No Id Player" has playerId None on the roster; a candidate with espn_id None must not match it.
+    result = stats.gamecock_of_the_week(_rookie_gamecock_box_scores(), [_candidate("Nobody", 9.0, None)])
+    assert result.team_name is None
+
+
+def test_gamecock_of_the_week_none_without_candidates():
+    assert stats.gamecock_of_the_week(_rookie_gamecock_box_scores(), []) is None
