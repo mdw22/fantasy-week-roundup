@@ -58,3 +58,46 @@ def test_espn_team_abbr_maps_nflverse_codes_that_differ():
     assert nfl_sup.espn_team_abbr("WAS") == "WSH"
     assert nfl_sup.espn_team_abbr("MIA") == "MIA"
     assert nfl_sup.espn_team_abbr(None) == ""
+
+
+def _play(game_id, qtr, desc):
+    return {"game_id": game_id, "qtr": qtr, "desc": desc}
+
+
+def test_players_who_did_not_return_excludes_players_who_came_back():
+    plays = [
+        _play("G1", 1.0, "9-B.Young pass incomplete. ATL-24-Aj.Terrell was injured during the play."),
+        _play("G1", 4.0, "28-A.Dillon runs. ** Injury Update: ATL-24-Aj.Terrell has returned to the game."),
+    ]
+    assert nfl_sup._players_who_did_not_return(plays) == {}
+
+
+def test_players_who_did_not_return_keeps_players_who_never_came_back():
+    plays = [_play("G1", 2.0, "CAR-53-C.Cherelus was injured during the play.")]
+    result = nfl_sup._players_who_did_not_return(plays)
+    assert result == {("G1", "CAR", "53"): 2.0}
+
+
+def test_players_who_did_not_return_is_scoped_per_game():
+    # Same team/jersey injured in one game and, separately, fine in another -- the return in G2
+    # must not clear the G1 injury.
+    plays = [
+        _play("G1", 1.0, "CAR-53-C.Cherelus was injured during the play."),
+        _play("G2", 3.0, "** Injury Update: CAR-53-C.Cherelus has returned to the game."),
+    ]
+    assert nfl_sup._players_who_did_not_return(plays) == {("G1", "CAR", "53"): 1.0}
+
+
+def test_players_who_did_not_return_ignores_plays_with_no_injury_text():
+    plays = [_play("G1", 1.0, "9-B.Young pass incomplete short right to 4-T.McMillan.")]
+    assert nfl_sup._players_who_did_not_return(plays) == {}
+
+
+def test_players_who_did_not_return_handles_a_second_injury_in_the_same_game():
+    # Player returns from the first injury, then gets hurt again later and doesn't return.
+    plays = [
+        _play("G1", 1.0, "CAR-53-C.Cherelus was injured during the play."),
+        _play("G1", 2.0, "** Injury Update: CAR-53-C.Cherelus has returned to the game."),
+        _play("G1", 3.0, "CAR-53-C.Cherelus was injured during the play."),
+    ]
+    assert nfl_sup._players_who_did_not_return(plays) == {("G1", "CAR", "53"): 3.0}

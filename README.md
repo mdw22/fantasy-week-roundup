@@ -20,6 +20,27 @@ WeasyPrint (PDF rendering) needs system libraries beyond pip:
 - **Ubuntu/Debian** (also what the GitHub Actions workflow installs):
   `apt-get install libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf2.0-0`
 
+**macOS runtime note:** installing Pango isn't enough by itself — Python needs
+`DYLD_LIBRARY_PATH=/opt/homebrew/lib` set *every time you run the program*, or WeasyPrint fails
+to import with `OSError: cannot load library 'libgobject-2.0-0'`. `./run.sh` (see Usage) sets
+this for you; if you'd rather run `python -m src.main` directly, export it yourself first:
+`export DYLD_LIBRARY_PATH=/opt/homebrew/lib`.
+
+**If ESPN/nflreadpy requests fail with `CERTIFICATE_VERIFY_FAILED`** (seen on a network whose
+proxy injects its own root certificate, e.g. some corporate networks): export a CA bundle built
+from your Mac's own trusted certificates and point Python at it —
+
+```bash
+mkdir -p .python
+security find-certificate -a -p /Library/Keychains/System.keychain \
+  /System/Library/Keychains/SystemRootCertificates.keychain > .python/macos-ca-bundle.pem
+export SSL_CERT_FILE="$PWD/.python/macos-ca-bundle.pem"
+export REQUESTS_CA_BUNDLE="$SSL_CERT_FILE"
+```
+
+`./run.sh` picks this up automatically if the file exists at that path — regenerate it if your
+network's certificate ever changes. `.python/` is gitignored, so this stays local to the machine.
+
 ### Configuration
 
 1. Copy `.env.example` to `.env` and fill in:
@@ -34,12 +55,20 @@ WeasyPrint (PDF rendering) needs system libraries beyond pip:
    before a run; omitted teams fall back to ESPN's algorithmic ranking.
 
 `.env`, `config/league.yaml`, and `config/power_rankings_override.yaml` are all gitignored —
-they're account-specific and shouldn't be committed. `config/lore.md` *is* committed: it's an
-append-only running log the narrative generator reads for continuity and writes to after each
-run. Each week's entry combines a factual, code-generated score summary with a short lore note
-Claude writes alongside the letter itself (any new nicknames, running jokes, or callbacks worth
-remembering) — so storylines the model invents can carry forward automatically, not just raw
-scores. If a week's letter didn't introduce anything new, only the factual summary is kept.
+they're account-specific and shouldn't be committed. `config/lore.md` and `config/nicknames.yaml`
+*are* committed: they're the narrative generator's persistent memory, read for continuity and
+written to after each run.
+
+- `config/lore.md` — one line per week, combining a factual, code-generated score summary with a
+  short lore note Claude writes alongside the letter itself (running jokes, storylines, callbacks
+  worth remembering). If a week's letter didn't introduce anything new, only the factual summary
+  is kept.
+- `config/nicknames.yaml` — legendary player nicknames (e.g. `Lord "The Dragon" Mahomes`) Claude
+  coins for standout performers over the season. Once a player is in this registry, every future
+  letter is instructed to reuse that exact nickname rather than renaming them or coining a second
+  one. See "Player titles" and "Legendary nicknames" in `src/narrative.py`'s `SYSTEM_PROMPT` for
+  the full rules (a title by position for every named player — QB/RB/WR/TE/K each get one; D/ST
+  is referred to collectively — plus this registry for the subset who earn an actual nickname).
 
 ## Usage
 
@@ -47,6 +76,11 @@ scores. If a week's letter didn't introduce anything new, only the factual summa
 python -m src.main                # most recently completed week
 python -m src.main --week 3       # explicit week override, for backfilling/testing
 ```
+
+On macOS, `./run.sh` is a drop-in replacement for `python -m src.main` (same arguments, e.g.
+`./run.sh --week 3 --draft-only`) that sets `DYLD_LIBRARY_PATH` and, if present, the local CA
+bundle described below — so you don't have to export either by hand. It's a local dev convenience,
+not used by CI.
 
 Output lands in `reports/week_<N>_<year>.pdf` and is committed back to the repo (see §7/§9 of
 the design spec for why: the tool is stateless and re-fetches ESPN data each run, except for the
@@ -57,12 +91,15 @@ lore file).
 To review or hand-edit the narrative before it's baked into a PDF, split the run into two steps:
 
 ```bash
-python -m src.main --week 3 --draft-only
+./run.sh --week 3 --draft-only
 # -> writes drafts/week_3_2026_letter.txt and prints the follow-up command
 
 # edit drafts/week_3_2026_letter.txt by hand, then:
-python -m src.main --week 3 --letter-file drafts/week_3_2026_letter.txt
+./run.sh --week 3 --letter-file drafts/week_3_2026_letter.txt
 ```
+
+(On Linux/CI, or if you're not using `run.sh`, the same two commands work as
+`python -m src.main --week 3 --draft-only` and `python -m src.main --week 3 --letter-file ...`.)
 
 `--draft-only` generates the letter and stops — it doesn't touch the lore file or render a PDF.
 `--letter-file` skips narrative generation entirely and uses that file's contents verbatim as the
@@ -72,10 +109,13 @@ independently (per the stateless design above), so if scores get corrected betwe
 the rendered tables could reflect newer data than what the letter was written against — rare, but
 worth a re-read if you edit long after generating the draft.
 
-The draft file has a trailing section marked `===LORE NOTE===` below the letter — that's Claude's
-own short summary of anything worth remembering next week, and it's what feeds `config/lore.md`
-once you finalize with `--letter-file`. You can edit it just like the letter, or delete it
-entirely if you'd rather that week not add anything to the lore log.
+The draft file has trailing sections marked `===LORE NOTE===` and `===NICKNAMES===` below the
+letter — Claude's own summary of anything worth remembering next week, and any brand-new legendary
+nicknames it coined this week, respectively. These are what feed `config/lore.md` and
+`config/nicknames.yaml` once you finalize with `--letter-file`. Edit either section like the
+letter, or delete one entirely if you'd rather that week not add anything to that particular log —
+deleting `===NICKNAMES===` (or the whole file) is also how you'd veto a nickname you don't like
+before it becomes permanent.
 
 ## Running tests
 

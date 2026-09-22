@@ -1,0 +1,13 @@
+# Legendary player nicknames coined in the Commissioner's Letter, carried across the season.
+# Auto-updated after each week: once a player is listed here, the letter is instructed to keep
+# using their exact nickname rather than coining a new one. Safe to hand-edit (e.g. to fix a
+# nickname, or delete an entry to let the letter retire/replace it).
+
+Jaxon Smith-Njigba:
+  position: WR
+  nickname: Swordsman "The Winter Hawk" Jaxon Smith-Njigba
+  established_week: 2
+Josh Allen:
+  position: QB
+  nickname: Lord "The Storm King" Josh Allen
+  established_week: 2

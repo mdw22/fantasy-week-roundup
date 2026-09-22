@@ -1,7 +1,8 @@
 """Supplemental NFL data via nflreadpy — facts ESPN's fantasy API doesn't expose:
-rookie status and weekly PPR points (for Rookie Spotlight, league-wide) and college affiliation + weekly stat lines
+rookie status and weekly PPR points (for Rookie Spotlight, league-wide), college affiliation + weekly stat lines
 (for Gamecock of the Week, scoped to University of South Carolina alumni per the
-design spec).
+design spec), and in-game injuries parsed from play-by-play text (for optional
+mentions in the Commissioner's Letter).
 
 Kept isolated from src/stats.py on purpose, the same way src/espn_client.py is:
 this module is the only place that talks to nflreadpy and knows its column
@@ -17,6 +18,7 @@ report_data's _safe_* wrappers turn that into a printed warning rather than a cr
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 import nflreadpy as nfl
@@ -88,6 +90,15 @@ class GamecockCandidate:
     pro_team: str
     score: float
     detail: str
+
+
+@dataclass
+class InjuryCandidate:
+    espn_id: int | None
+    name: str
+    position: str
+    pro_team: str
+    description: str
 
 
 def score_and_describe(row: dict) -> tuple[float, str]:
@@ -247,3 +258,102 @@ def get_gamecock_candidates(season: int, week: int) -> list[GamecockCandidate]:
             )
         )
     return candidates
+
+
+# Play-by-play descriptions carry two fixed phrasings for in-game injuries -- there's no
+# structured injury-event column in nflverse's pbp, so this is the only signal available. Group
+# is (team, jersey_number); the player's own abbreviated name in the text ("Aj.Terrell") is not
+# used for matching, since it doesn't reliably match a roster's full_name -- team + jersey against
+# that week's roster does.
+_INJURED_RE = re.compile(r"([A-Z]{2,3})-(\d+)-[A-Za-z.\-']+ was injured during the play")
+_RETURNED_RE = re.compile(r"([A-Z]{2,3})-(\d+)-[A-Za-z.\-']+ has returned to the game")
+
+
+def _players_who_did_not_return(plays: list[dict]) -> dict[tuple[str, str, str], object]:
+    """`plays`: one week's plays, in play order, as {"game_id", "qtr", "desc"} dicts (any extra
+    keys are ignored). Returns {(game_id, team, jersey): last_qtr_seen} for every player whose
+    most recent in-game injury this week has no later "has returned to the game" line for the
+    same (game_id, team, jersey).
+
+    This is a noisy proxy for "major," not an official designation: nflverse's play-by-play has no
+    severity or body-part field, and a player hurt on a game's final snap looks identical here to
+    one who couldn't return for a serious reason -- there's no way to tell "game just ended" from
+    "carted off" with this data source alone."""
+    state: dict[tuple[str, str, str], dict] = {}
+    for play in plays:
+        desc = play.get("desc") or ""
+        hurt = _INJURED_RE.search(desc)
+        returned = _RETURNED_RE.search(desc)
+        if hurt:
+            key = (play.get("game_id"), hurt.group(1), hurt.group(2))
+            state[key] = {"qtr": play.get("qtr"), "returned": False}
+        if returned:
+            key = (play.get("game_id"), returned.group(1), returned.group(2))
+            if key in state:
+                state[key]["returned"] = True
+    return {key: info["qtr"] for key, info in state.items() if not info["returned"]}
+
+
+def get_game_injuries(season: int, week: int) -> list[InjuryCandidate]:
+    """Every in-game injury this week, league-wide, where the player didn't return to that game
+    (see _players_who_did_not_return for what that does and doesn't mean). report_data scopes
+    these down to players actually rostered in this fantasy league -- an injury to someone nobody
+    here rosters has no house to attach it to in the letter -- before handing them to narrative.py
+    as optional context; Claude decides whether any are worth mentioning, nothing is forced in."""
+    pbp = nfl.load_pbp(seasons=[season])
+    p_columns = pbp.columns
+    week_col = _require_column(p_columns, ["week"], "week", "load_pbp")
+    game_col = _require_column(p_columns, ["game_id"], "game_id", "load_pbp")
+    play_col = _require_column(p_columns, ["play_id"], "play_id", "load_pbp")
+    qtr_col = _require_column(p_columns, ["qtr"], "qtr", "load_pbp")
+    desc_col = _require_column(p_columns, ["desc"], "desc", "load_pbp")
+
+    plays = (
+        pbp.filter(pbp[week_col] == week)
+        .select([game_col, play_col, qtr_col, desc_col])
+        .sort(play_col)
+        .rename({game_col: "game_id", qtr_col: "qtr", desc_col: "desc"})
+        .to_dicts()
+    )
+    did_not_return = _players_who_did_not_return(plays)
+    if not did_not_return:
+        return []
+
+    rosters = nfl.load_rosters(seasons=[season])
+    r_columns = rosters.columns
+    jersey_col = _require_column(r_columns, ["jersey_number"], "jersey_number", "load_rosters")
+    team_col = _require_column(r_columns, ["team"], "team", "load_rosters")
+    name_col = _require_column(r_columns, ["full_name", "player_name"], "name", "load_rosters")
+    position_col = _require_column(r_columns, ["position"], "position", "load_rosters")
+    espn_col = _require_column(r_columns, ["espn_id"], "espn_id", "load_rosters")
+    by_team_jersey = {
+        (row[team_col], str(int(row[jersey_col]))): row
+        for row in rosters.to_dicts()
+        if row.get(jersey_col) is not None and row.get(team_col) is not None
+    }
+
+    injuries = []
+    seen = set()
+    for (game_id, team, jersey), qtr in did_not_return.items():
+        roster_row = by_team_jersey.get((team, jersey))
+        if roster_row is None:
+            continue
+        dedupe_key = (roster_row[name_col], game_id)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        espn_id = roster_row.get(espn_col)
+        description = (
+            f"Left the game in Q{int(qtr)} and did not return" if qtr is not None
+            else "Left the game and did not return"
+        )
+        injuries.append(
+            InjuryCandidate(
+                espn_id=int(espn_id) if espn_id is not None else None,
+                name=roster_row[name_col],
+                position=roster_row[position_col],
+                pro_team=espn_team_abbr(team),
+                description=description,
+            )
+        )
+    return injuries

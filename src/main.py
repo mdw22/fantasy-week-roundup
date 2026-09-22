@@ -39,26 +39,29 @@ def _connect_and_build_report(week: int | None) -> tuple[WeekReport, dict]:
 
 def generate_letter_draft(week: int | None = None) -> tuple[Path, int]:
     """Generate the Commissioner's Letter and write it to a plain-text draft file for manual
-    editing, without touching the lore file or rendering a PDF. Pair with --letter-file once
-    you're happy with the edits. Returns (draft_path, resolved_week).
+    editing, without touching the lore file, the nickname registry, or rendering a PDF. Pair with
+    --letter-file once you're happy with the edits. Returns (draft_path, resolved_week).
 
-    The draft file includes the trailing lore-note section (marked with
-    narrative.LORE_NOTE_MARKER) below the letter — it's there to review/edit too, since it's
-    what gets folded into config/lore.md for next week's continuity. --letter-file parses it
-    back out, so leaving it in place (or editing it) both work; deleting it just means no lore
-    note gets recorded for the week."""
+    The draft file includes the trailing lore-note and nicknames sections (marked with
+    narrative.LORE_NOTE_MARKER / narrative.NICKNAME_MARKER) below the letter — they're there to
+    review/edit too, since they're what get folded into config/lore.md and config/nicknames.yaml
+    for next week's continuity. --letter-file parses them back out, so leaving either in place (or
+    editing it) both work; deleting a section just means nothing gets recorded there for the week."""
     report, league_config = _connect_and_build_report(week)
-    letter, lore_note = narrative.generate_commissioners_letter(
+    letter, lore_note, nicknames_text = narrative.generate_commissioners_letter(
         report,
         theme=league_config["narrative_theme"],
         commissioner_name=league_config["commissioner_name"],
         lore_path=CONFIG_DIR / "lore.md",
+        nicknames_path=CONFIG_DIR / "nicknames.yaml",
     )
     DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
     draft_path = DRAFTS_DIR / f"week_{report.week}_{report.season_year}_letter.txt"
     draft_contents = letter
     if lore_note:
         draft_contents += f"\n\n{narrative.LORE_NOTE_MARKER}\n{lore_note}"
+    if nicknames_text:
+        draft_contents += f"\n\n{narrative.NICKNAME_MARKER}\n{nicknames_text}"
     draft_path.write_text(draft_contents)
     return draft_path, report.week
 
@@ -67,20 +70,23 @@ def generate_report(week: int | None = None, letter_file: str | Path | None = No
     report, league_config = _connect_and_build_report(week)
 
     if letter_file:
-        report.commissioners_letter, lore_note = narrative.split_letter_and_lore_note(
+        report.commissioners_letter, lore_note, nicknames_text = narrative.split_response(
             Path(letter_file).read_text()
         )
     else:
-        report.commissioners_letter, lore_note = narrative.generate_commissioners_letter(
+        report.commissioners_letter, lore_note, nicknames_text = narrative.generate_commissioners_letter(
             report,
             theme=league_config["narrative_theme"],
             commissioner_name=league_config["commissioner_name"],
             lore_path=CONFIG_DIR / "lore.md",
+            nicknames_path=CONFIG_DIR / "nicknames.yaml",
         )
 
     factual_summary = narrative.summarize_matchups_for_lore(report)
     lore_summary = narrative.combine_lore_summary(factual_summary, lore_note)
     narrative.append_lore_entry(CONFIG_DIR / "lore.md", report.week, lore_summary)
+    new_nicknames = narrative.parse_new_nicknames(nicknames_text)
+    narrative.append_nicknames(CONFIG_DIR / "nicknames.yaml", new_nicknames, report.week)
 
     output_path = REPORTS_DIR / f"week_{report.week}_{report.season_year}.pdf"
     render.render_pdf(report, league_config, output_path)

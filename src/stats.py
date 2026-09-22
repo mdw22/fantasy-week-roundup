@@ -11,6 +11,12 @@ from dataclasses import dataclass
 
 BENCH_SLOTS = {"BE", "IR"}
 
+# For notable_injuries(): a bench player counts as "high value" if ESPN projected them for at
+# least this many points that week -- a flat cutoff, not position-adjusted, but a cheap proxy for
+# "startable" that's good enough for deciding whether an injury is worth the letter's attention.
+# Starters clear the bar automatically regardless of this threshold (see notable_injuries).
+HIGH_VALUE_PROJECTED_POINTS = 12.0
+
 
 @dataclass
 class TeamStat:
@@ -36,6 +42,15 @@ class PlayerStat:
     position: str
     points: float
     detail: str = ""
+
+
+@dataclass
+class InjuryNote:
+    player_name: str
+    team_name: str  # always set -- unrostered injuries are dropped, see notable_injuries()
+    pro_team: str
+    position: str
+    description: str
 
 
 @dataclass
@@ -109,8 +124,8 @@ def best_worst_team(box_scores: list) -> tuple[TeamStat, TeamStat]:
     best_name = max(scores, key=scores.get)
     worst_name = min(scores, key=scores.get)
     return (
-        TeamStat(best_name, scores[best_name]),
-        TeamStat(worst_name, scores[worst_name]),
+        TeamStat(best_name, scores[best_name], detail="highest score this week"),
+        TeamStat(worst_name, scores[worst_name], detail="lowest score this week"),
     )
 
 
@@ -128,8 +143,8 @@ def most_improved_biggest_dropoff(
     best_name = max(deltas, key=deltas.get)
     worst_name = min(deltas, key=deltas.get)
     return (
-        TeamStat(best_name, deltas[best_name]),
-        TeamStat(worst_name, deltas[worst_name]),
+        TeamStat(best_name, deltas[best_name], detail="point increase from last week"),
+        TeamStat(worst_name, deltas[worst_name], detail="point decrease from last week"),
     )
 
 
@@ -143,8 +158,8 @@ def closest_win_biggest_blowout(box_scores: list) -> tuple[TeamStat, TeamStat]:
     closest = min(matchups, key=lambda m: m[0])
     blowout = max(matchups, key=lambda m: m[0])
     return (
-        TeamStat(closest[1], closest[0], detail=f"over {closest[2]}"),
-        TeamStat(blowout[1], blowout[0], detail=f"over {blowout[2]}"),
+        TeamStat(closest[1], closest[0], detail=f"margin of victory over {closest[2]}"),
+        TeamStat(blowout[1], blowout[0], detail=f"margin of victory over {blowout[2]}"),
     )
 
 
@@ -181,8 +196,8 @@ def longest_streaks(teams: list, week: int) -> tuple[TeamStat | None, TeamStat |
     longest_win = max(win_streaks, default=None, key=lambda x: x[0])
     longest_loss = max(loss_streaks, default=None, key=lambda x: x[0])
     return (
-        TeamStat(longest_win[1], longest_win[0]) if longest_win else None,
-        TeamStat(longest_loss[1], longest_loss[0]) if longest_loss else None,
+        TeamStat(longest_win[1], longest_win[0], detail="consecutive wins") if longest_win else None,
+        TeamStat(longest_loss[1], longest_loss[0], detail="consecutive losses") if longest_loss else None,
     )
 
 
@@ -201,7 +216,9 @@ def biggest_upset(box_scores: list) -> TeamStat | None:
         swing = abs(actual_margin_home - proj_margin_home)
         winner = bs.home_team if home_won else bs.away_team
         loser = bs.away_team if home_won else bs.home_team
-        candidate = TeamStat(winner.team_name, swing, detail=f"upset over {loser.team_name}")
+        candidate = TeamStat(
+            winner.team_name, swing, detail=f"point swing vs. the projection, upset over {loser.team_name}"
+        )
         if best is None or swing > best.value:
             best = candidate
     return best
@@ -216,7 +233,7 @@ def biggest_underachiever(box_scores: list) -> TeamStat | None:
         ):
             diff = score - projected
             if worst is None or diff < worst.value:
-                worst = TeamStat(team.team_name, diff)
+                worst = TeamStat(team.team_name, diff, detail="points below projection")
     return worst
 
 
@@ -276,6 +293,17 @@ def _rostered_team_by_espn_id(box_scores: list) -> dict[int, str]:
     }
 
 
+def _rostered_player_by_espn_id(box_scores: list) -> dict[int, tuple[str, object]]:
+    """ESPN player ID -> (fantasy team name, Player), for everyone on a lineup this week -- like
+    _rostered_team_by_espn_id but keeps the Player object too, for filters that need lineupSlot or
+    projected_points (see notable_injuries)."""
+    return {
+        p.playerId: (team_name, p)
+        for team_name, p in _iter_lineup_players(box_scores)
+        if getattr(p, "playerId", None) is not None
+    }
+
+
 def rookie_spotlight(box_scores: list, candidates: list) -> PlayerStat | None:
     """Best NFL performance this week by a rookie QB/RB/WR/TE, league-wide -- rostered by a fantasy
     team (starter or bench) or not. `candidates` is the list of
@@ -313,6 +341,36 @@ def gamecock_of_the_week(box_scores: list, candidates: list) -> PlayerStat | Non
     )
 
 
+def notable_injuries(box_scores: list, candidates: list) -> list[InjuryNote]:
+    """In-game injuries this week (nfl_supplemental.InjuryCandidate, from
+    nfl_supplemental.get_game_injuries) narrowed to players who are both (a) rostered on a fantasy
+    team here, matched by ESPN player ID, and (b) either started that week or are "high value"
+    (projected_points >= HIGH_VALUE_PROJECTED_POINTS) even if benched.
+
+    The play-by-play has no severity or body-part field (see nfl_supplemental's docstring), so
+    there's no way to tell a season-ending injury from a routine one-play breather apart from
+    whether the player mattered to a fantasy lineup -- restricting to starters/high-value players
+    is a stand-in for "was this actually worth a mention" given that blind spot. An unrostered
+    injury is dropped rather than shown as unattributed (unlike Rookie Spotlight and Gamecock of
+    the Week): this list exists to give the letter's narrative optional material ("your team's X
+    got hurt"), and an injury to a player nobody in this league rosters has no house to attach it
+    to. Order is not significant -- narrative.py includes all of them and lets Claude pick what's
+    worth mentioning, if anything (and is told to stay vague about severity, since none is known)."""
+    rostered_by = _rostered_player_by_espn_id(box_scores)
+    notes = []
+    for c in candidates:
+        rostered = rostered_by.get(c.espn_id)
+        if rostered is None:
+            continue
+        team_name, player = rostered
+        is_starter = player.lineupSlot not in BENCH_SLOTS
+        is_high_value = (player.projected_points or 0) >= HIGH_VALUE_PROJECTED_POINTS
+        if not (is_starter or is_high_value):
+            continue
+        notes.append(InjuryNote(c.name, team_name, c.pro_team, c.position, c.description))
+    return notes
+
+
 def _ordinal(n: int) -> str:
     suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
     return f"{n}{suffix}"
@@ -330,8 +388,8 @@ def luckiest_win_unluckiest_loss(box_scores: list) -> tuple[TeamStat | None, Tea
     Each is only returned when its "despite ranking Nth" claim is actually true -- the lucky
     winner has to rank in the bottom half of the field, the unlucky loser in the top half --
     otherwise that row is None and the report leaves it out. Ties in all-play wins go to the
-    lower score (lucky) / higher score (unlucky). `value` is the all-play wins; `display` the
-    "W-L" record."""
+    lower score (lucky) / higher score (unlucky). `value` is the all-play wins; `display` spells
+    it out as "Would have beaten N teams"."""
     scores = team_scores(box_scores)
     n = len(scores)
     if n < 2:
@@ -350,10 +408,11 @@ def luckiest_win_unluckiest_loss(box_scores: list) -> tuple[TeamStat | None, Tea
 
     def build(name: str, verb: str) -> TeamStat:
         wins = all_play_wins(name)
+        team_word = "team" if wins == 1 else "teams"
         return TeamStat(
             name, float(wins),
             detail=f"{verb} despite ranking {_ordinal(scoring_rank(name))} of {n} in scoring",
-            display=f"{wins}-{n - 1 - wins}",
+            display=f"Would have beaten {wins} {team_word}",
         )
 
     lucky = min(winners, key=lambda nm: (all_play_wins(nm), scores[nm]), default=None)

@@ -60,6 +60,9 @@ class WeekReport:
     individual_highlights: dict[str, stats.PlayerStat]
     score_bars: list[stats.ScoreBar] = field(default_factory=list)
     season_leaders: SeasonLeaders | None = None  # None in Week 1: season-to-date == this week
+    # In-game injuries to rostered players this week, for the letter to optionally reference --
+    # not rendered as its own report section. See stats.notable_injuries.
+    injuries: list[stats.InjuryNote] = field(default_factory=list)
     commissioners_letter: str | None = None
     season_extras: dict = field(default_factory=dict)
 
@@ -70,6 +73,45 @@ def load_power_rankings_override(path: str | Path | None, week: int) -> dict[str
     with open(path) as f:
         data = yaml.safe_load(f) or {}
     return data.get(f"week_{week}", {})
+
+
+_POWER_RANKINGS_OVERRIDE_HEADER = """\
+# Manual "Commissioner" power rankings, updated by hand before each run.
+# Keys are ESPN team_name values (must match exactly). Value is the rank (1 = best).
+# Any team omitted falls back to the ESPN algorithmic power ranking for that week.
+"""
+
+
+def ensure_power_rankings_override(league, week: int, path: str | Path | None) -> None:
+    """The first time a week is run, seeds config/power_rankings_override.yaml with that week's
+    ESPN algorithmic ranking as a starting point to hand-edit. Every run after that leaves the
+    week's block alone -- re-running a week (a re-render, a backfill) must never clobber whatever
+    the "Commissioner" has since typed in by hand.
+
+    Appends rather than rewriting the whole file: round-tripping the existing content through
+    yaml.safe_load + yaml.safe_dump would silently strip the header comment (and any comments the
+    user added to their own week blocks), since PyYAML has no comment-preserving dump mode."""
+    if not path:
+        return
+    path = Path(path)
+    existing_text = path.read_text() if path.exists() else ""
+    existing_data = yaml.safe_load(existing_text) or {} if existing_text.strip() else {}
+    week_key = f"week_{week}"
+    if week_key in existing_data:
+        return  # already seeded (or hand-edited) -- leave it alone
+
+    power_rankings = espn_client.get_power_rankings(league, week)
+    ranks = {team.team_name: i + 1 for i, (_, team) in enumerate(power_rankings)}
+    if not ranks:
+        return  # nothing to seed with (e.g. week not yet playable)
+
+    block = yaml.safe_dump({week_key: ranks}, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    with open(path, "a") as f:
+        if not existing_text:
+            f.write(_POWER_RANKINGS_OVERRIDE_HEADER + "\n")
+        elif not existing_text.endswith("\n"):
+            f.write("\n")
+        f.write("\n" + block)
 
 
 # Display order for the per-position "Top X" awards in Individual Highlights. Any position not
@@ -156,12 +198,21 @@ def _safe_gamecock_candidates(season: int, week: int) -> list:
         return []
 
 
+def _safe_game_injuries(season: int, week: int) -> list:
+    try:
+        return nfl_supplemental.get_game_injuries(season, week)
+    except Exception as exc:  # noqa: BLE001 - should never take down the whole report
+        print(f"warning: in-game injury lookup failed ({exc}); omitting from letter context.")
+        return []
+
+
 def build_week_report(
     league,
     week: int | None = None,
     power_rankings_override_path: str | Path | None = None,
 ) -> WeekReport:
     week = espn_client.resolve_target_week(league, week)
+    ensure_power_rankings_override(league, week, power_rankings_override_path)
     # One fetch per week 1..N (~0.6s each): this week, last week (improvement/drop-off), and the
     # full run of weeks for season-to-date leaders.
     box_scores_by_week = espn_client.get_box_scores_through(league, week)
@@ -249,6 +300,7 @@ def build_week_report(
     bench = stats.bench_mvp(box_scores)
     rookie = stats.rookie_spotlight(box_scores, _safe_rookie_candidates(league.year, week))
     gamecock = stats.gamecock_of_the_week(box_scores, _safe_gamecock_candidates(league.year, week))
+    injuries = stats.notable_injuries(box_scores, _safe_game_injuries(league.year, week))
 
     individual_highlights = ordered_individual_highlights(mvp, top_by_position, bench, rookie, gamecock)
 
@@ -264,4 +316,5 @@ def build_week_report(
         individual_highlights=individual_highlights,
         score_bars=stats.score_bars(box_scores),
         season_leaders=_build_season_leaders(standings_rows, box_scores_by_week, week),
+        injuries=injuries,
     )

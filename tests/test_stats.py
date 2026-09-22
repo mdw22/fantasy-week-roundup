@@ -18,13 +18,17 @@ class FakeTeam:
 
 
 class FakePlayer:
-    def __init__(self, name, position, points, lineup_slot, pro_team="NFL", player_id=None):
+    def __init__(
+        self, name, position, points, lineup_slot, pro_team="NFL", player_id=None,
+        projected_points=0.0,
+    ):
         self.playerId = player_id
         self.name = name
         self.position = position
         self.points = points
         self.lineupSlot = lineup_slot
         self.proTeam = pro_team
+        self.projected_points = projected_points
 
 
 class FakeBoxScore:
@@ -99,7 +103,9 @@ def test_best_worst_team():
     box_scores = make_box_scores()
     best, worst = stats.best_worst_team(box_scores)
     assert best.team_name == "House Stark"
+    assert best.detail == "highest score this week"
     assert worst.team_name == "House Lannister"
+    assert worst.detail == "lowest score this week"
 
 
 def test_most_improved_biggest_dropoff():
@@ -107,7 +113,9 @@ def test_most_improved_biggest_dropoff():
     prior = {"House Stark": 80.0, "House Lannister": 130.0}
     improved, dropoff = stats.most_improved_biggest_dropoff(current, prior)
     assert improved.team_name == "House Stark"
+    assert improved.detail == "point increase from last week"
     assert dropoff.team_name == "House Lannister"
+    assert dropoff.detail == "point decrease from last week"
 
 
 def test_most_improved_biggest_dropoff_no_prior_week():
@@ -121,8 +129,10 @@ def test_closest_win_biggest_blowout():
     closest, blowout = stats.closest_win_biggest_blowout(box_scores)
     assert closest.team_name == "House Targaryen"
     assert closest.value == 1.0
+    assert closest.detail == "margin of victory over House Greyjoy"
     assert blowout.team_name == "House Stark"
     assert blowout.value == 30.5
+    assert blowout.detail == "margin of victory over House Lannister"
 
 
 def test_streak_ending_at():
@@ -151,8 +161,10 @@ def test_longest_streaks():
     win_streak, loss_streak = stats.longest_streaks(teams, 4)
     assert win_streak.team_name == "House Stark"
     assert win_streak.value == 3
+    assert win_streak.detail == "consecutive wins"
     assert loss_streak.team_name == "House Lannister"
     assert loss_streak.value == 4
+    assert loss_streak.detail == "consecutive losses"
 
 
 def test_biggest_upset():
@@ -161,6 +173,7 @@ def test_biggest_upset():
     # House Greyjoy was projected to lose by 25 but won by 1 -> upset.
     # House Lannister was favored by 10 but lost by 30.5 -> also an upset, bigger swing.
     assert upset.team_name == "House Stark"
+    assert upset.detail == "point swing vs. the projection, upset over House Lannister"
 
 
 def test_biggest_underachiever():
@@ -168,6 +181,7 @@ def test_biggest_underachiever():
     underachiever = stats.biggest_underachiever(box_scores)
     assert underachiever.team_name == "House Lannister"
     assert underachiever.value == -20.0
+    assert underachiever.detail == "points below projection"
 
 
 def test_individual_mvp():
@@ -268,6 +282,72 @@ def test_gamecock_of_the_week_none_without_candidates():
     assert stats.gamecock_of_the_week(_rookie_gamecock_box_scores(), []) is None
 
 
+def _injury(name, espn_id, description="Left the game in Q3 and did not return"):
+    return nfl_supplemental.InjuryCandidate(
+        espn_id=espn_id, name=name, position="RB", pro_team="MIA", description=description
+    )
+
+
+def test_notable_injuries_drops_unrostered_players():
+    # id 1 (Vet Starter) and id 2 (Bench Rookie) are rostered; 999 is nobody in this league.
+    result = stats.notable_injuries(
+        _rookie_gamecock_box_scores(), [_injury("Vet Starter", 1), _injury("Nobody Here", 999)]
+    )
+    assert [n.player_name for n in result] == ["Vet Starter"]
+    assert result[0].team_name == "House Stark"
+    assert result[0].description == "Left the game in Q3 and did not return"
+
+
+def test_notable_injuries_missing_espn_id_never_matches_id_less_roster_player():
+    # "No Id Player" has playerId None on the roster; a candidate with espn_id None must not match it.
+    result = stats.notable_injuries(_rookie_gamecock_box_scores(), [_injury("Nobody", None)])
+    assert result == []
+
+
+def test_notable_injuries_empty_without_candidates():
+    assert stats.notable_injuries(_rookie_gamecock_box_scores(), []) == []
+
+
+def _value_filter_box_scores():
+    return [
+        FakeBoxScore(
+            home_team=FakeTeam("House Stark"), home_score=0, home_projected=0,
+            away_team=FakeTeam("House Lannister"), away_score=0, away_projected=0,
+            home_lineup=[
+                FakePlayer("Low Value Starter", "WR", 4.0, "WR", player_id=1, projected_points=6.0),
+                FakePlayer("High Value Bench", "RB", 0.0, "BE", player_id=2, projected_points=18.0),
+            ],
+            away_lineup=[
+                FakePlayer("Low Value Bench", "TE", 0.0, "BE", player_id=3, projected_points=3.0),
+                FakePlayer(
+                    "Right At The Line", "RB", 0.0, "BE", player_id=4,
+                    projected_points=stats.HIGH_VALUE_PROJECTED_POINTS,
+                ),
+            ],
+        )
+    ]
+
+
+def test_notable_injuries_keeps_low_value_starter():
+    result = stats.notable_injuries(_value_filter_box_scores(), [_injury("Low Value Starter", 1)])
+    assert [n.player_name for n in result] == ["Low Value Starter"]
+
+
+def test_notable_injuries_keeps_high_value_bench_player():
+    result = stats.notable_injuries(_value_filter_box_scores(), [_injury("High Value Bench", 2)])
+    assert [n.player_name for n in result] == ["High Value Bench"]
+
+
+def test_notable_injuries_drops_low_value_bench_player():
+    result = stats.notable_injuries(_value_filter_box_scores(), [_injury("Low Value Bench", 3)])
+    assert result == []
+
+
+def test_notable_injuries_high_value_threshold_is_inclusive():
+    result = stats.notable_injuries(_value_filter_box_scores(), [_injury("Right At The Line", 4)])
+    assert [n.player_name for n in result] == ["Right At The Line"]
+
+
 def test_score_bars_sorted_descending_with_winner_flags_and_relative_width():
     bars = stats.score_bars(make_box_scores())
     assert [b.score for b in bars] == sorted((b.score for b in bars), reverse=True)
@@ -298,9 +378,9 @@ def test_luckiest_win_and_unluckiest_loss():
     lucky, unlucky = stats.luckiest_win_unluckiest_loss(
         _four_team_week(("T1", 80.0, "T2", 70.0), ("T3", 120.0, "T4", 130.0))
     )
-    assert lucky.team_name == "T1" and lucky.display == "1-2" and lucky.value == 1.0
+    assert lucky.team_name == "T1" and lucky.display == "Would have beaten 1 team" and lucky.value == 1.0
     assert lucky.detail == "won despite ranking 3rd of 4 in scoring"
-    assert unlucky.team_name == "T3" and unlucky.display == "2-1"
+    assert unlucky.team_name == "T3" and unlucky.display == "Would have beaten 2 teams"
     assert unlucky.detail == "lost despite ranking 2nd of 4 in scoring"
 
 
