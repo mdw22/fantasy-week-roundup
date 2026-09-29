@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import nflreadpy as nfl
 
@@ -37,6 +39,36 @@ _ESPN_TEAM_ABBR = {"LA": "LAR", "WAS": "WSH"}
 
 def espn_team_abbr(nflverse_team: str | None) -> str:
     return _ESPN_TEAM_ABBR.get(nflverse_team or "", nflverse_team or "")
+
+
+# A week "ends" at this Eastern time on the morning after its last game day: late enough that a
+# Monday night game has finished, early enough that Tuesday's moves count toward the next week.
+WEEK_END_CUTOFF_ET = time(6, 0)
+_EASTERN = ZoneInfo("America/New_York")
+
+
+def week_end_from_game_days(game_days: list[str]) -> datetime:
+    """Pure helper for week_end_time: ISO game days (YYYY-MM-DD) -> the week's end, timezone-aware."""
+    last = max(date.fromisoformat(d) for d in game_days)
+    return datetime.combine(last + timedelta(days=1), WEEK_END_CUTOFF_ET, tzinfo=_EASTERN)
+
+
+def week_end_time(season: int, week: int) -> datetime:
+    """When NFL regular-season `week` of `season` is over (see WEEK_END_CUTOFF_ET), from the
+    nflverse schedule."""
+    schedules = nfl.load_schedules(seasons=[season])
+    columns = schedules.columns
+    season_col = _require_column(columns, ["season"], "season", "load_schedules")
+    week_col = _require_column(columns, ["week"], "week", "load_schedules")
+    type_col = _require_column(columns, ["game_type"], "game_type", "load_schedules")
+    day_col = _require_column(columns, ["gameday"], "gameday", "load_schedules")
+    rows = schedules.filter(
+        (schedules[season_col] == season) & (schedules[week_col] == week) & (schedules[type_col] == "REG")
+    )
+    game_days = [d for d in rows[day_col].to_list() if d]
+    if not game_days:
+        raise RuntimeError(f"no {season} week {week} games in load_schedules")
+    return week_end_from_game_days(game_days)
 
 # (key, nflreadpy weekly-stats columns summed for this stat, short label for the
 # detail string, weight toward the notability score). Every listed column must

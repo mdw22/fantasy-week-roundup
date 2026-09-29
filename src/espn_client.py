@@ -43,3 +43,33 @@ def get_standings(league: League) -> list:
 def get_power_rankings(league: League, week: int) -> list[tuple[str, object]]:
     """List of (score_str, Team), ESPN's algorithmic ranking, best first."""
     return league.power_rankings(week=week)
+
+
+def get_recent_activity(league: League, since=None, page_size: int = 100) -> list:
+    """League transactions, newest first. Pages back until the oldest one fetched is at or before
+    `since` (a timezone-aware datetime), or the feed runs out; with `since` None, the first page."""
+    activity, offset = [], 0
+    while True:
+        page = league.recent_activity(size=page_size, offset=offset)
+        activity.extend(page)
+        if len(page) < page_size or since is None:
+            return activity
+        if page[-1].date / 1000 <= since.timestamp():
+            return activity
+        offset += page_size
+
+
+def get_free_agents(league: League, week: int, position: str, size: int = 50) -> list:
+    """Free agents at `position` with `week`'s projections. ESPN orders these by % rostered, not
+    projection -- callers sort."""
+    return league.free_agents(week=week, size=size, position=position)
+
+
+def get_player_info(league: League, player_ids: list[int]) -> list:
+    """Player cards (with per-week stats) for the given ESPN IDs, in one request."""
+    if not player_ids:
+        return []
+    found = league.player_info(playerId=list(player_ids))
+    if found is None:
+        return []
+    return found if isinstance(found, list) else [found]

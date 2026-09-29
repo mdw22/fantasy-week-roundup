@@ -19,6 +19,7 @@ MODEL = "claude-opus-5"
 
 LORE_NOTE_MARKER = "===LORE NOTE==="
 NICKNAME_MARKER = "===NICKNAMES==="
+BOLD_PREDICTION_MARKER = "===BOLD PREDICTION==="
 NOTHING_NEW_SENTINEL = "nothing new"
 
 SYSTEM_PROMPT = f"""You are the ghostwriter for a fantasy football league's weekly recap letter. \
@@ -93,7 +94,17 @@ list players who only got the plain positional title (Lord/Knight/Swordsman/Squi
 without an actual nickname. If you didn't coin any new nicknames this week, write
 "{NOTHING_NEW_SENTINEL}" instead.
 
-Output nothing else — no preamble, no meta-commentary before the letter or after the nicknames."""
+After that, on its own line, write the exact marker "{BOLD_PREDICTION_MARKER}", then one Bold
+Prediction for next week's games, drawn from the `next_week` block of the structured data: a
+single specific, checkable call (a winner and score or margin, an upset, a player's big game) in
+one sentence, 30 words at most. Unlike the letter, write it plainly and out of character — no
+theme, no persona voice, no player titles or nicknames, just full player names and team names as
+they appear in the data. The style (not the content) to follow: "[Player] will put up over 30
+points, but [Team A] will still lose to [Team B]." The `next_week` block exists only for this prediction — the letter above stays a recap of
+the week just played and should not preview next week. If the structured data has no `next_week`
+block, write "{NOTHING_NEW_SENTINEL}" instead.
+
+Output nothing else — no preamble, no meta-commentary before the letter or after the prediction."""
 
 
 def _team_stat_to_dict(stat: TeamStat) -> dict:
@@ -133,8 +144,51 @@ def _season_scorer_to_dict(scorer) -> dict:
     }
 
 
-def build_week_summary(report: WeekReport) -> dict:
+def _next_week_to_dict(pv) -> dict:
+    """The upcoming week, compactly: just enough for a grounded Bold Prediction."""
+
+    def side(s) -> dict:
+        return {
+            "team": s.team.team_name,
+            "record": s.team.record,
+            "streak": s.team.streak,
+            "season_average": round(s.team.average, 2),
+            "projected": round(s.projected, 2),
+            "top_projected_players": [
+                {"player": p.name, "position": p.position, "projected_points": round(p.projected, 2)}
+                for p in s.top_players
+            ],
+            "lineup_concerns": [
+                {"player": p.name, "position": p.position, "status": p.flag, "in_ir_slot": p.in_ir_slot}
+                for p in s.flagged
+            ],
+        }
+
+    def series(m) -> str | None:
+        if m.head_to_head is None:
+            return None
+        hw, aw, ties = m.head_to_head
+        return f"{m.home.team.team_name} {hw}-{aw}" + (f"-{ties}" if ties else "") + f" {m.away.team.team_name}"
+
     return {
+        "week": pv.week,
+        "matchups": [
+            {"home": side(m.home), "away": side(m.away), "all_time_series": series(m)} for m in pv.matchups
+        ],
+        "preview_highlights": [
+            {
+                "category": pick.label,
+                "home_team": pick.matchup.home.team.team_name,
+                "away_team": pick.matchup.away.team.team_name,
+                "reason": pick.reason,
+            }
+            for pick in pv.picks
+        ],
+    }
+
+
+def build_week_summary(report: WeekReport) -> dict:
+    summary = {
         "week": report.week,
         "matchups": [
             {
@@ -182,6 +236,9 @@ def build_week_summary(report: WeekReport) -> dict:
             else None
         ),
     }
+    if report.preview:
+        summary["next_week"] = _next_week_to_dict(report.preview)
+    return summary
 
 
 def read_lore(lore_path: str | Path) -> str:
@@ -299,17 +356,35 @@ This week's structured data:
 Write this week's letter now."""
 
 
-def split_response(raw_text: str) -> tuple[str, str, str]:
-    """Split the model's raw response into (letter, lore_note, nicknames_text). Falls back
-    gracefully when a marker is missing — e.g. a hand-edited draft that dropped a section, or an
-    older-format draft file passed to --letter-file from before a marker existed."""
-    if LORE_NOTE_MARKER not in raw_text:
-        return raw_text.strip(), "", ""
-    letter_part, _, rest = raw_text.partition(LORE_NOTE_MARKER)
-    if NICKNAME_MARKER not in rest:
-        return letter_part.strip(), rest.strip(), ""
-    lore_part, _, nickname_part = rest.partition(NICKNAME_MARKER)
-    return letter_part.strip(), lore_part.strip(), nickname_part.strip()
+SECTION_MARKERS = (LORE_NOTE_MARKER, NICKNAME_MARKER, BOLD_PREDICTION_MARKER)
+
+
+def split_response(raw_text: str) -> tuple[str, str, str, str]:
+    """Split the model's raw response into (letter, lore_note, nicknames_text, bold_prediction).
+    Everything before the first marker is the letter; each marker's section runs to the next
+    marker, in whatever order they appear. A missing marker leaves its section "" -- e.g. a
+    hand-edited draft that dropped a section, or an older draft from before a marker existed."""
+    found = sorted((raw_text.find(m), m) for m in SECTION_MARKERS if m in raw_text)
+    if not found:
+        return raw_text.strip(), "", "", ""
+    sections = {}
+    for i, (start, marker) in enumerate(found):
+        end = found[i + 1][0] if i + 1 < len(found) else len(raw_text)
+        sections[marker] = raw_text[start + len(marker):end].strip()
+    return (
+        raw_text[:found[0][0]].strip(),
+        sections.get(LORE_NOTE_MARKER, ""),
+        sections.get(NICKNAME_MARKER, ""),
+        sections.get(BOLD_PREDICTION_MARKER, ""),
+    )
+
+
+def bold_prediction_text(section: str) -> str | None:
+    """The Bold Prediction section as display text, or None if it's empty or the sentinel."""
+    text = " ".join(section.split())
+    if not text or text.lower().startswith(NOTHING_NEW_SENTINEL):
+        return None
+    return text
 
 
 def generate_commissioners_letter(
@@ -319,11 +394,13 @@ def generate_commissioners_letter(
     lore_path: str | Path,
     nicknames_path: str | Path,
     client: anthropic.Anthropic | None = None,
-) -> tuple[str, str, str]:
-    """Returns (letter, lore_note, nicknames_text) — lore_note is a short out-of-character summary
-    of anything new this week's letter introduced that's worth remembering (or "" if nothing was);
-    nicknames_text is the raw "Name | Position | Nickname" lines for any brand-new legendary
-    nicknames coined this week (or "" if none), meant to be passed to parse_new_nicknames()."""
+) -> tuple[str, str, str, str]:
+    """Returns (letter, lore_note, nicknames_text, bold_prediction) — lore_note is a short
+    out-of-character summary of anything new this week's letter introduced that's worth
+    remembering (or "" if nothing was); nicknames_text is the raw "Name | Position | Nickname"
+    lines for any brand-new legendary nicknames coined this week (or "" if none), meant to be
+    passed to parse_new_nicknames(); bold_prediction is the raw section for the preview, meant to
+    be passed to bold_prediction_text()."""
     client = client or anthropic.Anthropic()
     week_summary = build_week_summary(report)
     lore_text = read_lore(lore_path)

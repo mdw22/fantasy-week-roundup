@@ -117,6 +117,12 @@ letter, or delete one entirely if you'd rather that week not add anything to tha
 deleting `===NICKNAMES===` (or the whole file) is also how you'd veto a nickname you don't like
 before it becomes permanent.
 
+A third section, `===BOLD PREDICTION===`, holds one prediction for next week's games (the same
+letter call writes it, from a compact `next_week` block of projections and records that it's told
+to use only for the prediction). It appears as the last row of the preview's highlights. Edit it
+freely; delete the section, or write `nothing new`, to leave that row out. Sections are found by
+marker, in any order, so older drafts without this section still work.
+
 ## Running tests
 
 ```bash
@@ -124,20 +130,25 @@ pip install pytest
 pytest tests/
 ```
 
-`tests/test_stats.py` covers the highlight math in `src/stats.py` against fixture data — no live
-ESPN connection or API key required.
+`tests/test_stats.py` covers the highlight math in `src/stats.py`, and `tests/test_history.py` the
+lifetime stats in `src/history.py`, against fixture data — no live ESPN connection or API key
+required.
 
 ## Project layout
 
 See `src/espn_client.py` (league connection + raw fetches), `src/stats.py` (highlight math),
-`src/narrative.py` (Commissioner's Letter prompt + Claude API call), `src/report_data.py`
+`src/narrative.py` (Commissioner's Letter prompt + Claude API call), `src/history.py` (past
+seasons and lifetime stats), `src/waivers.py` (report card and pickups), `src/preview.py` (next
+week's preview), `src/report_data.py`
 (assembles one `WeekReport` per run), `src/render.py` (Jinja2 + WeasyPrint → PDF), and
 `src/main.py` (CLI entry point).
 
 ## What's in each report
 
 Cover, then scoreboard (with a "Week N at a Glance" score bar chart), standings, team highlights,
-individual highlights, and the Commissioner's Letter.
+individual highlights, and the Waiver Report Card (Part I, the week just played); Part II, next
+week's preview (projected scores, highlight picks, a Matchup Analysis card per game, Suggested
+Pickups); two appendices; and the Commissioner's Letter last.
 
 - **Rank movement** — Power Rank and Mike's Rankings show how many places a team moved since last
   week. ESPN's power rankings are recomputed from each team's scoring history through a given week
@@ -150,6 +161,45 @@ individual highlights, and the Commissioner's Letter.
 - **Season Leaders** (Week 2 onward) — top 3 teams by season points and top 3 players by season
   fantasy points, counting only points earned while starting (same rule as Individual MVP). This
   fetches every week's box scores each run (~0.6s per week, about 10s for a full season).
+- **Waiver Report Card** — every add (waiver, free agent, trade) made after the previous week's
+  last game through this week's last game, graded on the player's points that week (A 20+, B 12+,
+  C 6+, D above 0, F zero or less; thresholds in `src/waivers.py`), with a "Bench" tag when the new
+  team didn't start him. Current Status shows where the player is as of the report: On Roster,
+  Dropped (back on waivers or free agency), or on another team. Dropped players who scored 15+ anyway show under "Drops That Bit Back".
+  A week ends at 6 a.m. ET the morning after its last game (from the nflverse schedule), so moves
+  made Monday night or Tuesday are graded in the next report instead.
+- **Suggested Pickups** — the top two free agents at each position by ESPN's projection for next
+  week, with last week's points and % rostered. Only built when the report is for the latest completed week (a
+  backfill can't know who was available back then) and there is a next week.
+- **Week N+1 Preview** — ESPN's projected scores for next week (lineups as of the report, which
+  managers can still change), then rule-based picks, each on a different game where possible:
+  Game of the Week (most combined wins, then closest projection), Blowout Watch (widest projected
+  margin), Upset Alert (the underdog who out-averages the favorite by the most, else the closest
+  game left), and Biggest Playoff Implications (the game whose seeds sit nearest the playoff line;
+  regular season only). The Bold Prediction row comes from the letter call, written plainly
+  (no theme, titles or nicknames). Each **Matchup
+  Analysis** card shows both teams' abbreviation, manager, record, streak, seed, season average,
+  last week's result, top three projected starters, a Lineup Watch (starters flagged Out /
+  Doubtful / Questionable / IR / Suspended / Bye, plus IR-slot players who are Questionable or
+  Doubtful and might return), the projected favorite, and the all-time regular-season
+  series. Playoff odds stay on the Standings page. Like the pickups, the preview is only built
+  for the latest completed week.
+- **Appendix A: Season Stats** — per team through the report week: record, all-play record, PF,
+  PA, average, high and low week, points left on the bench (best possible lineup minus actual,
+  filling single-position slots first, then the flex), the latest week's max (what the best
+  possible lineup would have scored that week), and weeks beating their own projection.
+- **Appendix B: Lifetime Stats** — all-time records (seasons, W-L-T, win %, PF, average, titles,
+  playoff appearances), champions, a record book, and a rivalry summary (for each manager, Best Record
+  Against, the opponent they have the best record against, and Nemesis, the opponent with the best record
+  against them; minimum two meetings). Regular-season games only, since ESPN's
+  playoff weeks include consolation games. Managers are keyed by ESPN owner ID, so team renames
+  don't split a record, and owner IDs that ever shared a team (co-owners, or one person with two
+  ESPN accounts) count as one manager.
+
+  Past seasons are cached in `data/history/<year>.json` (committed; a finished season never
+  changes) and fetched automatically the first time a year is missing. Pass `--refresh-history`
+  to re-download them. The current season is always read live. If history can't be loaded, the
+  appendix is skipped with a warning.
 
 ## Supplemental NFL data
 

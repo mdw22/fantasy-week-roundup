@@ -629,3 +629,266 @@ h3.subhead {
   color: var(--muted);
   font-size: 8.5pt;
 }
+
+/* --- Appendices: dense reference tables, so smaller type than the weekly sections --- */
+.appendix-note {
+  font-size: 9pt;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0 0 0.1in 0;
+}
+
+.season-table, .alltime-table {
+  font-size: 8.5pt;
+}
+
+.season-table th, .alltime-table th {
+  padding: 5pt 4pt;
+  font-size: 7pt;
+  letter-spacing: 0.2pt;
+  white-space: normal;
+}
+
+.season-table td, .alltime-table td {
+  padding: 4pt 4pt;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fixed widths so the team column keeps room for a long unbroken team name. */
+.season-table {
+  table-layout: fixed;
+}
+
+.season-table th:nth-child(1) { width: 26%; }
+.season-table th:nth-child(2) { width: 7.5%; }
+.season-table th:nth-child(3) { width: 6.5%; }
+.season-table th:nth-child(4),
+.season-table th:nth-child(5),
+.season-table th:nth-child(6),
+.season-table th:nth-child(7),
+.season-table th:nth-child(8) { width: 7.2%; }
+.season-table th:nth-child(9) { width: 8%; }
+.season-table th:nth-child(10) { width: 8%; }
+.season-table th:nth-child(11) { width: 8%; }
+
+.season-table td:first-child, .alltime-table td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
+.record-book, .rivalry-table {
+  font-size: 9pt;
+}
+
+tr.former td, .appendix-note .former {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.champions {
+  display: flex;
+  gap: 0.25in;
+  margin-bottom: 0.1in;
+}
+
+/* One column per title, year over team over manager, so a long team name wraps inside its own
+   column instead of reflowing the whole row. */
+.champion {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  border-top: 1.5pt solid var(--gold);
+  padding-top: 4pt;
+}
+
+.champion-year {
+  font-size: 13pt;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  color: var(--gold-deep);
+}
+
+.champion-team {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
+/* A short block (heading + small table) that should move to the next page whole rather than split. */
+.keep-together {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* --- Waiver Report Card / Suggested Pickups --- */
+.waiver-table td, .pickups-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.grade {
+  display: inline-block;
+  min-width: 16pt;
+  text-align: center;
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  border-radius: 3pt;
+  padding: 1pt 4pt;
+}
+
+.grade-a { background: var(--gold); color: var(--iron); }
+.grade-b { background: var(--row-tint); color: var(--gold-deep); border: 0.75pt solid var(--gold); }
+.grade-c { color: var(--muted); border: 0.75pt solid var(--hairline); }
+.grade-d { color: var(--accent); border: 0.75pt solid var(--hairline); }
+.grade-f { background: var(--accent); color: #fff; }
+.grade-none { color: var(--muted); }
+
+.status-dropped {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pickups-table {
+  table-layout: fixed;
+}
+
+.pickups-table th:nth-child(1) { width: 12%; }
+.pickups-table th:nth-child(2) { width: 40%; }
+.pickups-table th:nth-child(3) { width: 16%; }
+.pickups-table th:nth-child(4) { width: 16%; }
+.pickups-table th:nth-child(5) { width: 16%; }
+
+.pickups-table td:first-child {
+  white-space: nowrap;
+}
+
+/* --- Part labels: "I. Week N Review" / "II. Week N+1 Preview" above the first h2 of each part --- */
+.part-label {
+  font-family: "Cinzel", "Helvetica Neue", Arial, sans-serif;
+  font-size: 9pt;
+  letter-spacing: 1.2pt;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-bottom: 2pt;
+}
+
+/* --- Preview highlight picks --- */
+.picks-table th:nth-child(1) { width: 24%; }
+.picks-table th:nth-child(2) { width: 30%; }
+
+/* --- Matchup Analysis cards: home on the left, away on the right, labels down the middle --- */
+.card {
+  border: 0.75pt solid var(--hairline);
+  border-top: 2pt solid var(--accent);
+  border-radius: 3pt;
+  margin-bottom: 0.14in;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 8pt;
+  padding: 4pt 8pt;
+  background: var(--row-tint);
+}
+
+.card-side {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.card-side.right {
+  text-align: right;
+}
+
+.card-team {
+  font-weight: 600;
+  font-size: 11pt;
+}
+
+.card-proj {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 12pt;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+
+.card-head .vs {
+  font-size: 8pt;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.card-table {
+  table-layout: fixed;
+  margin: 0;
+  font-size: 9pt;
+}
+
+.card-table tr:nth-child(even) {
+  background: none;
+}
+
+.card-table td, .card-table th {
+  padding: 2pt 8pt;
+  line-height: 1.25;
+  vertical-align: top;
+}
+
+.card-table td:first-child { width: 40%; }
+.card-table td:last-child { width: 40%; text-align: right; }
+
+.card-table th {
+  width: 20%;
+  text-align: center;
+  background: none;
+  color: var(--muted);
+  font-size: 7pt;
+  border-radius: 0;
+}
+
+.card-foot {
+  padding: 3pt 8pt;
+  font-size: 8.5pt;
+  font-style: italic;
+  color: var(--muted);
+  border-top: 0.5pt solid var(--hairline);
+}
+
+.flag {
+  display: inline-block;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 6.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.3pt;
+  padding: 0.5pt 3pt;
+  border-radius: 2pt;
+  border: 0.5pt solid var(--hairline);
+  color: var(--muted);
+}
+
+.flag-out, .flag-ir, .flag-suspended, .flag-bye { background: var(--accent); border-color: var(--accent); color: #fff; }
+.flag-doubtful { color: var(--accent); border-color: var(--accent); }
+
+/* Projected scoreboard rows: neutral (no favorite highlighted) with room for the "Proj" label. */
+.matchup.projected {
+  grid-template-columns: 1fr 5.6em 1.6em 5.6em 1fr;
+}
+
+.matchup.projected .score {
+  white-space: nowrap;
+}
+
+.matchup.projected .team {
+  font-size: 9.5pt;
+}
+
+.proj-label {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 6pt;
+  text-transform: uppercase;
+  letter-spacing: 0.3pt;
+  color: var(--muted);
+}

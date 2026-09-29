@@ -462,3 +462,98 @@ def luckiest_win_unluckiest_loss(box_scores: list) -> tuple[TeamStat | None, Tea
     luckiest = build(lucky, "won") if lucky is not None and all_play_wins(lucky) < half else None
     unluckiest = build(unlucky, "lost") if unlucky is not None and all_play_wins(unlucky) > half else None
     return luckiest, unluckiest
+
+
+@dataclass
+class SeasonTeamRow:
+    team_name: str
+    wins: int
+    losses: int
+    ties: int
+    all_play_wins: int
+    all_play_losses: int
+    points_for: float
+    points_against: float
+    average: float
+    high: float
+    low: float
+    bench_points_lost: float  # optimal lineup minus actual score, summed over the season
+    # What the best possible lineup would have scored in the latest week only.
+    last_week_max_points: float
+    beat_projection: int  # weeks the team outscored its own pregame projection
+    weeks: int
+
+
+def optimal_lineup_points(players: list, slot_counts: dict[str, int]) -> float:
+    """Best possible score from a team's whole roster (starters + bench) for one week, filling
+    each lineup slot with the highest scorer eligible for it. Single-position slots are filled
+    before multi-position ones (RB/WR/TE flex), so the flex takes the best player left over --
+    exact for a lineup where only the flex overlaps other slots, which is this league's layout."""
+    slots = [(slot, n) for slot, n in slot_counts.items() if n and slot not in BENCH_SLOTS]
+    slots.sort(key=lambda s: ("/" in s[0] and s[0] != "D/ST", s[0]))
+    remaining = list(players)
+    total = 0.0
+    for slot, count in slots:
+        for _ in range(count):
+            eligible = [p for p in remaining if slot in (getattr(p, "eligibleSlots", None) or [])]
+            if not eligible:
+                break
+            best = max(eligible, key=lambda p: p.points)
+            total += best.points
+            remaining.remove(best)
+    return total
+
+
+def season_team_table(box_scores_by_week: dict[int, list], slot_counts: dict[str, int]) -> list[SeasonTeamRow]:
+    """Season-to-date table per team (Appendix A), best record first. All-play counts every other
+    team's score each week (ties count as neither), same idea as luckiest_win_unluckiest_loss.
+    Points left on the bench is optimal lineup minus the actual score, floored at 0 per week, and
+    the latest week's max is that week's score plus its bench points."""
+    per_team: dict[str, dict] = {}
+
+    def entry(name: str) -> dict:
+        return per_team.setdefault(name, {
+            "w": 0, "l": 0, "t": 0, "apw": 0, "apl": 0, "pf": 0.0, "pa": 0.0,
+            "scores": [], "lost": 0.0, "beat": 0, "last_max": 0.0,
+        })
+
+    for week in sorted(box_scores_by_week):
+        box_scores = box_scores_by_week[week]
+        week_scores = team_scores(box_scores)
+        for bs in box_scores:
+            sides = (
+                (bs.home_team.team_name, bs.home_score, bs.home_projected, bs.away_score, bs.home_lineup),
+                (bs.away_team.team_name, bs.away_score, bs.away_projected, bs.home_score, bs.away_lineup),
+            )
+            for name, score, projected, opp_score, lineup in sides:
+                e = entry(name)
+                if score > opp_score:
+                    e["w"] += 1
+                elif score < opp_score:
+                    e["l"] += 1
+                else:
+                    e["t"] += 1
+                others = [s for n, s in week_scores.items() if n != name]
+                e["apw"] += sum(1 for s in others if s < score)
+                e["apl"] += sum(1 for s in others if s > score)
+                e["pf"] += score
+                e["pa"] += opp_score
+                e["scores"].append(score)
+                lost = max(0.0, optimal_lineup_points(lineup, slot_counts) - score)
+                e["lost"] += lost
+                e["last_max"] = score + lost  # weeks run in order, so the last write is the latest week
+                e["beat"] += 1 if score > projected else 0
+
+    rows = [
+        SeasonTeamRow(
+            team_name=name, wins=e["w"], losses=e["l"], ties=e["t"],
+            all_play_wins=e["apw"], all_play_losses=e["apl"],
+            points_for=e["pf"], points_against=e["pa"],
+            average=e["pf"] / len(e["scores"]), high=max(e["scores"]), low=min(e["scores"]),
+            bench_points_lost=e["lost"], last_week_max_points=e["last_max"],
+            beat_projection=e["beat"], weeks=len(e["scores"]),
+        )
+        for name, e in per_team.items()
+    ]
+    rows.sort(key=lambda r: (-r.wins, r.losses, -r.points_for))
+    return rows

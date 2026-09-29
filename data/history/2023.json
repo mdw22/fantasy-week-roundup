@@ -1,0 +1,1592 @@
+{
+  "season": 2023,
+  "reg_season_count": 14,
+  "playoff_team_count": 8,
+  "complete": true,
+  "teams": [
+    {
+      "owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+      "owner_ids": [
+        "{A8D43E71-81CD-4879-AF0D-140871FE5851}"
+      ],
+      "owner_name": "Jake Estroff",
+      "team_name": " The  Good Ole Boys",
+      "abbrev": "ESTR",
+      "standing": 7,
+      "final_standing": 7,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 81.8,
+          "pa": 82.54,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 95.92,
+          "pa": 112.96,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 116.58,
+          "pa": 118.28,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 95.96,
+          "pa": 174.48,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 200.72,
+          "pa": 169.64,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 113.2,
+          "pa": 91.92,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 99.56,
+          "pa": 137.76,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 147.86,
+          "pa": 107.68,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 115.28,
+          "pa": 123.14,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 95.62,
+          "pa": 134.12,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 118.5,
+          "pa": 49.34,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 118.4,
+          "pa": 100.56,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 136.04,
+          "pa": 85.36,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 112.08,
+          "pa": 117.5,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 117.32,
+          "pa": 124.32,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 115.84,
+          "pa": 163.1,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 133.58,
+          "pa": 107.6,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+      "owner_ids": [
+        "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}"
+      ],
+      "owner_name": "Carter Jackson",
+      "team_name": "Kegorators ! ",
+      "abbrev": "KEG",
+      "standing": 2,
+      "final_standing": 2,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 161.76,
+          "pa": 123.06,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 97.8,
+          "pa": 98.54,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 163.2,
+          "pa": 138.66,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 129.18,
+          "pa": 75.2,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 123.24,
+          "pa": 112.14,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 149.28,
+          "pa": 103.94,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 104.16,
+          "pa": 124.04,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 147.52,
+          "pa": 96.18,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 123.14,
+          "pa": 115.28,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 108.92,
+          "pa": 103.9,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 146.7,
+          "pa": 161.8,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 133.08,
+          "pa": 108.26,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 89.88,
+          "pa": 98.4,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 121.04,
+          "pa": 87.04,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 124.32,
+          "pa": 117.32,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 143.12,
+          "pa": 120.48,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 60.28,
+          "pa": 131.96,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+      "owner_ids": [
+        "{F8251762-3B56-43DE-B45A-0D0303605355}"
+      ],
+      "owner_name": "Aegon Targaryen",
+      "team_name": "Member Berries",
+      "abbrev": "MEBR",
+      "standing": 5,
+      "final_standing": 6,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 108.06,
+          "pa": 138.24,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 113.66,
+          "pa": 161.0,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 118.28,
+          "pa": 116.58,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 89.06,
+          "pa": 86.18,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 122.06,
+          "pa": 110.96,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 103.94,
+          "pa": 149.28,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 103.62,
+          "pa": 86.58,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 134.46,
+          "pa": 66.86,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 110.88,
+          "pa": 110.3,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 114.16,
+          "pa": 89.88,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 71.16,
+          "pa": 122.14,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 108.26,
+          "pa": 133.08,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 114.94,
+          "pa": 156.88,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 113.46,
+          "pa": 88.82,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 84.72,
+          "pa": 160.16,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 123.62,
+          "pa": 100.4,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 52.4,
+          "pa": 120.52,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+      "owner_ids": [
+        "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}"
+      ],
+      "owner_name": "Eric Swenson",
+      "team_name": "North Augusta Gypsies",
+      "abbrev": "NCAR",
+      "standing": 12,
+      "final_standing": 12,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 77.8,
+          "pa": 119.94,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 98.54,
+          "pa": 97.8,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 118.06,
+          "pa": 102.06,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 106.64,
+          "pa": 111.64,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 106.28,
+          "pa": 89.4,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 99.24,
+          "pa": 122.84,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 69.8,
+          "pa": 131.8,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 66.86,
+          "pa": 134.46,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 96.4,
+          "pa": 141.32,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 102.72,
+          "pa": 108.02,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 49.34,
+          "pa": 118.5,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 81.46,
+          "pa": 158.42,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 91.38,
+          "pa": 113.86,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 88.82,
+          "pa": 113.46,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 102.28,
+          "pa": 98.82,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 77.3,
+          "pa": 101.14,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 92.1,
+          "pa": 95.94,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+      "owner_ids": [
+        "{A49192B8-DCA7-4588-8E42-14E456A7790D}"
+      ],
+      "owner_name": "Charlie Mannix",
+      "team_name": "Beer n Deer",
+      "abbrev": "MANN",
+      "standing": 4,
+      "final_standing": 1,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 102.54,
+          "pa": 55.76,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 112.96,
+          "pa": 95.92,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 106.12,
+          "pa": 118.66,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 147.9,
+          "pa": 114.52,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 110.96,
+          "pa": 122.06,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 104.26,
+          "pa": 80.02,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 131.8,
+          "pa": 69.8,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 178.36,
+          "pa": 86.6,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 115.62,
+          "pa": 127.02,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 117.18,
+          "pa": 122.88,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 161.8,
+          "pa": 146.7,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 141.26,
+          "pa": 155.78,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 113.86,
+          "pa": 91.38,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 107.12,
+          "pa": 122.92,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 160.16,
+          "pa": 84.72,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 169.08,
+          "pa": 92.94,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 131.96,
+          "pa": 60.28,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+      "owner_ids": [
+        "{DBBD5BAD-ECCF-4289-B940-09165F517931}"
+      ],
+      "owner_name": "Danny Goldstein",
+      "team_name": "Dirty Musty  Steinman ",
+      "abbrev": "JEw",
+      "standing": 9,
+      "final_standing": 9,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 83.18,
+          "pa": 99.46,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 134.68,
+          "pa": 111.3,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 102.06,
+          "pa": 118.06,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 75.2,
+          "pa": 129.18,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 119.78,
+          "pa": 127.98,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 131.4,
+          "pa": 126.72,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 137.76,
+          "pa": 99.56,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 129.52,
+          "pa": 73.7,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 127.02,
+          "pa": 115.62,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 89.88,
+          "pa": 114.16,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 109.04,
+          "pa": 107.7,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 99.34,
+          "pa": 154.28,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 85.36,
+          "pa": 136.04,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 112.64,
+          "pa": 121.44,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 75.36,
+          "pa": 106.98,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 86.22,
+          "pa": 82.66,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 117.3,
+          "pa": 99.96,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+      "owner_ids": [
+        "{6292E990-87F6-4BC6-92E9-9087F6EBC651}"
+      ],
+      "owner_name": "Will Marshall",
+      "team_name": "Team Marshall",
+      "abbrev": "MARS",
+      "standing": 1,
+      "final_standing": 3,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 138.24,
+          "pa": 108.06,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 124.94,
+          "pa": 157.24,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 118.66,
+          "pa": 106.12,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 174.48,
+          "pa": 95.96,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 88.62,
+          "pa": 89.74,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 132.78,
+          "pa": 84.74,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 124.04,
+          "pa": 104.16,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 130.46,
+          "pa": 105.28,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 141.32,
+          "pa": 96.4,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 141.56,
+          "pa": 102.34,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 107.7,
+          "pa": 109.04,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 143.54,
+          "pa": 122.06,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 98.4,
+          "pa": 89.88,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 111.3,
+          "pa": 86.94,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 148.06,
+          "pa": 79.14,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 92.94,
+          "pa": 169.08,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 169.88,
+          "pa": 143.44,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+      "owner_ids": [
+        "{9EF9A58B-4B75-4466-8C25-8CAE71929838}"
+      ],
+      "owner_name": "brian bell",
+      "team_name": "Blackened Beasts",
+      "abbrev": "FINk",
+      "standing": 10,
+      "final_standing": 10,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 123.06,
+          "pa": 161.76,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 111.3,
+          "pa": 134.68,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 140.76,
+          "pa": 140.08,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 70.88,
+          "pa": 131.8,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 89.4,
+          "pa": 106.28,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 84.74,
+          "pa": 132.78,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 121.16,
+          "pa": 82.16,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 107.68,
+          "pa": 147.86,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 87.8,
+          "pa": 105.3,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 122.88,
+          "pa": 117.18,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 122.14,
+          "pa": 71.16,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 122.06,
+          "pa": 143.54,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 123.02,
+          "pa": 123.02,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 117.5,
+          "pa": 112.08,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 106.98,
+          "pa": 75.36,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 101.14,
+          "pa": 77.3,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 99.96,
+          "pa": 117.3,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+      "owner_ids": [
+        "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}"
+      ],
+      "owner_name": "Evan Johnson",
+      "team_name": "local crack dealer ",
+      "abbrev": "aids",
+      "standing": 11,
+      "final_standing": 11,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 55.76,
+          "pa": 102.54,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 157.24,
+          "pa": 124.94,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 118.18,
+          "pa": 135.88,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 86.18,
+          "pa": 89.06,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 169.64,
+          "pa": 200.72,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 126.72,
+          "pa": 131.4,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 82.16,
+          "pa": 121.16,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 96.18,
+          "pa": 147.52,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 100.02,
+          "pa": 92.0,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 108.02,
+          "pa": 102.72,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 89.34,
+          "pa": 96.84,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 154.28,
+          "pa": 99.34,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 123.02,
+          "pa": 123.02,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 87.04,
+          "pa": 121.04,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 98.82,
+          "pa": 102.28,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 82.66,
+          "pa": 86.22,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 95.94,
+          "pa": 92.1,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+      "owner_ids": [
+        "{CD1AA740-7A9F-4256-9450-D00F130EAC85}"
+      ],
+      "owner_name": "Adam Smith",
+      "team_name": "The Drunk Monks",
+      "abbrev": "NIL",
+      "standing": 8,
+      "final_standing": 5,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 119.94,
+          "pa": 77.8,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 115.34,
+          "pa": 135.48,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 138.66,
+          "pa": 163.2,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 131.8,
+          "pa": 70.88,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 127.98,
+          "pa": 119.78,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 91.92,
+          "pa": 113.2,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 121.84,
+          "pa": 140.36,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 86.6,
+          "pa": 178.36,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 110.3,
+          "pa": 110.88,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 102.34,
+          "pa": 141.56,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 96.84,
+          "pa": 89.34,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 100.56,
+          "pa": 118.4,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 137.76,
+          "pa": 132.9,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 122.92,
+          "pa": 107.12,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 79.14,
+          "pa": 148.06,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 163.1,
+          "pa": 115.84,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 120.52,
+          "pa": 52.4,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+      "owner_ids": [
+        "{5B9248F7-A749-4FE3-A4D2-375099411897}"
+      ],
+      "owner_name": "Aaron Stark",
+      "team_name": "House Stark",
+      "abbrev": "STAR",
+      "standing": 3,
+      "final_standing": 8,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 82.54,
+          "pa": 81.8,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 161.0,
+          "pa": 113.66,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 135.88,
+          "pa": 118.18,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 114.52,
+          "pa": 147.9,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 89.74,
+          "pa": 88.62,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 122.84,
+          "pa": 99.24,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 140.36,
+          "pa": 121.84,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 73.7,
+          "pa": 129.52,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 105.3,
+          "pa": 87.8,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 103.9,
+          "pa": 108.92,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 89.38,
+          "pa": 132.06,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 158.42,
+          "pa": 81.46,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 132.9,
+          "pa": 137.76,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 121.44,
+          "pa": 112.64,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+          "pf": 111.5,
+          "pa": 122.14,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 100.4,
+          "pa": 123.62,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 107.6,
+          "pa": 133.58,
+          "playoff": true
+        }
+      ]
+    },
+    {
+      "owner_id": "{8937D060-D061-4703-BC60-B959AD65084E}",
+      "owner_ids": [
+        "{8937D060-D061-4703-BC60-B959AD65084E}"
+      ],
+      "owner_name": "Mike White",
+      "team_name": "Mogadishu Somali Pirates",
+      "abbrev": "ARGH",
+      "standing": 6,
+      "final_standing": 4,
+      "games": [
+        {
+          "week": 1,
+          "opp_owner_id": "{DBBD5BAD-ECCF-4289-B940-09165F517931}",
+          "pf": 99.46,
+          "pa": 83.18,
+          "playoff": false
+        },
+        {
+          "week": 2,
+          "opp_owner_id": "{CD1AA740-7A9F-4256-9450-D00F130EAC85}",
+          "pf": 135.48,
+          "pa": 115.34,
+          "playoff": false
+        },
+        {
+          "week": 3,
+          "opp_owner_id": "{9EF9A58B-4B75-4466-8C25-8CAE71929838}",
+          "pf": 140.08,
+          "pa": 140.76,
+          "playoff": false
+        },
+        {
+          "week": 4,
+          "opp_owner_id": "{9B4A6D08-10AC-43CE-8A6D-0810AC53CEE9}",
+          "pf": 111.64,
+          "pa": 106.64,
+          "playoff": false
+        },
+        {
+          "week": 5,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 112.14,
+          "pa": 123.24,
+          "playoff": false
+        },
+        {
+          "week": 6,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 80.02,
+          "pa": 104.26,
+          "playoff": false
+        },
+        {
+          "week": 7,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 86.58,
+          "pa": 103.62,
+          "playoff": false
+        },
+        {
+          "week": 8,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 105.28,
+          "pa": 130.46,
+          "playoff": false
+        },
+        {
+          "week": 9,
+          "opp_owner_id": "{2D5CF326-DF31-44CB-9CF3-26DF31D4CB14}",
+          "pf": 92.0,
+          "pa": 100.02,
+          "playoff": false
+        },
+        {
+          "week": 10,
+          "opp_owner_id": "{A8D43E71-81CD-4879-AF0D-140871FE5851}",
+          "pf": 134.12,
+          "pa": 95.62,
+          "playoff": false
+        },
+        {
+          "week": 11,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 132.06,
+          "pa": 89.38,
+          "playoff": false
+        },
+        {
+          "week": 12,
+          "opp_owner_id": "{A49192B8-DCA7-4588-8E42-14E456A7790D}",
+          "pf": 155.78,
+          "pa": 141.26,
+          "playoff": false
+        },
+        {
+          "week": 13,
+          "opp_owner_id": "{F8251762-3B56-43DE-B45A-0D0303605355}",
+          "pf": 156.88,
+          "pa": 114.94,
+          "playoff": false
+        },
+        {
+          "week": 14,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 86.94,
+          "pa": 111.3,
+          "playoff": false
+        },
+        {
+          "week": 15,
+          "opp_owner_id": "{5B9248F7-A749-4FE3-A4D2-375099411897}",
+          "pf": 122.14,
+          "pa": 111.5,
+          "playoff": true
+        },
+        {
+          "week": 16,
+          "opp_owner_id": "{EEA4E4CC-7D51-428D-A4E4-CC7D51128DD9}",
+          "pf": 120.48,
+          "pa": 143.12,
+          "playoff": true
+        },
+        {
+          "week": 17,
+          "opp_owner_id": "{6292E990-87F6-4BC6-92E9-9087F6EBC651}",
+          "pf": 143.44,
+          "pa": 169.88,
+          "playoff": true
+        }
+      ]
+    }
+  ]
+}

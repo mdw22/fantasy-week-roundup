@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import espn_client, nfl_supplemental, stats
+from . import espn_client, history, nfl_supplemental, preview, stats, waivers
 
 
 @dataclass
@@ -67,6 +67,15 @@ class WeekReport:
     # In-game injuries to rostered players this week, for the letter to optionally reference --
     # not rendered as its own report section. See stats.notable_injuries.
     injuries: list[stats.InjuryNote] = field(default_factory=list)
+    season_table: list[stats.SeasonTeamRow] = field(default_factory=list)  # Appendix A
+    lifetime: history.LifetimeStats | None = None  # Appendix B; None if history couldn't load
+    # None if the activity/schedule lookups failed; an empty card is a quiet week.
+    waiver_report_card: waivers.WaiverReportCard | None = None
+    # Next week's best free agents; empty unless this is the latest completed week (a backfill
+    # can't know who was available back then) and there is a next week.
+    pickups: list[waivers.Pickup] = field(default_factory=list)
+    # II. Week N+1 Preview; None under the same conditions as `pickups`, or if the lookup failed.
+    preview: preview.Preview | None = None
     commissioners_letter: str | None = None
     season_extras: dict = field(default_factory=dict)
 
@@ -210,10 +219,126 @@ def _safe_game_injuries(season: int, week: int) -> list:
         return []
 
 
+def _safe_history(league, week: int, history_dir, refresh: bool) -> tuple[list[dict] | None, history.LifetimeStats | None]:
+    """(every season's snapshot, lifetime stats) -- the snapshots also feed the preview's
+    head-to-head records. (None, None) if there's no history dir or loading fails."""
+    if not history_dir:
+        return None, None
+    try:
+        seasons = history.load_seasons(
+            league, week, lambda year: espn_client.connect(year=year), history_dir, refresh=refresh
+        )
+        return seasons, history.lifetime_stats(seasons)
+    except Exception as exc:  # noqa: BLE001 - an appendix should never take down the report
+        print(f"warning: lifetime stats unavailable ({exc}); omitting Appendix B.")
+        return None, None
+
+
+def _is_current_report(league, week: int) -> bool:
+    """True when `week` is the latest completed week and another follows it -- the only time
+    next-week sections (preview, pickups) describe something a reader can still act on."""
+    return week == league.current_week - 1 and week < league.finalScoringPeriod
+
+
+def _team_contexts(espn_teams: list, standings_rows: list, box_scores: list) -> dict[str, preview.TeamContext]:
+    streaks = {row.team_name: row.streak for row in standings_rows}
+    last_results = {}
+    for bs in box_scores:
+        for team, mine, theirs in (
+            (bs.home_team, bs.home_score, bs.away_score), (bs.away_team, bs.away_score, bs.home_score),
+        ):
+            outcome = "W" if mine > theirs else ("L" if mine < theirs else "T")
+            last_results[team.team_name] = f"{outcome} {mine:.2f}–{theirs:.2f}"
+    contexts = {}
+    for t in espn_teams:
+        owner = (t.owners or [{}])[0]
+        games = t.wins + t.losses + t.ties
+        contexts[t.team_name] = preview.TeamContext(
+            team_name=t.team_name,
+            abbrev=t.team_abbrev,
+            manager=f'{owner.get("firstName", "")} {owner.get("lastName", "")}'.strip(),
+            owner_id=owner.get("id"),
+            wins=t.wins, losses=t.losses, ties=t.ties,
+            streak=streaks.get(t.team_name, "-"),
+            seed=t.standing,
+            average=t.points_for / games if games else 0.0,
+            last_result=last_results.get(t.team_name, ""),
+        )
+    return contexts
+
+
+def _safe_preview(league, week: int, contexts: dict, seasons: list[dict] | None) -> preview.Preview | None:
+    if not _is_current_report(league, week):
+        return None
+    try:
+        h2h = (lambda a, b: history.head_to_head(seasons, a, b)) if seasons else None
+        matchups = preview.matchup_previews(espn_client.get_box_scores(league, week + 1), contexts, h2h)
+        picks = preview.pick_highlights(
+            matchups, league.settings.playoff_team_count,
+            include_playoff_pick=week + 1 <= league.settings.reg_season_count,
+        )
+        return preview.Preview(week + 1, matchups, picks)
+    except Exception as exc:  # noqa: BLE001 - a supplemental section should never take down the report
+        print(f"warning: Week {week + 1} preview unavailable ({exc}); omitting it.")
+        return None
+
+
+def _week_points(players: list, week: int) -> dict[int, float]:
+    """playerId -> points in `week`, from espn_api player cards (Player.stats[week]["points"])."""
+    points = {}
+    for p in players:
+        pts = (getattr(p, "stats", {}) or {}).get(week, {}).get("points")
+        if pts is not None:
+            points[p.playerId] = pts
+    return points
+
+
+def _safe_waiver_report_card(league, week: int, box_scores: list) -> waivers.WaiverReportCard | None:
+    try:
+        end = nfl_supplemental.week_end_time(league.year, week)
+        start = nfl_supplemental.week_end_time(league.year, week - 1) if week > 1 else None
+        activity = espn_client.get_recent_activity(league, since=start)
+        on_lineups = {p.playerId for bs in box_scores for p in bs.home_lineup + bs.away_lineup}
+        # Players on no lineup at week's end (dropped and still unclaimed, or flipped again) need
+        # their week looked up separately -- one batched request.
+        missing = {
+            player.playerId
+            for act in activity if waivers.in_window(act, start, end)
+            for _, _, player, *_ in act.actions
+            if player.playerId not in on_lineups
+        }
+        points = _week_points(espn_client.get_player_info(league, sorted(missing)), week)
+        current_rosters = {p.playerId: t.team_name for t in league.teams for p in t.roster}
+        return waivers.waiver_report_card(activity, box_scores, start, end, points.get, current_rosters)
+    except Exception as exc:  # noqa: BLE001 - a supplemental section should never take down the report
+        print(f"warning: waiver report card unavailable ({exc}); omitting it.")
+        return None
+
+
+def _safe_pickups(league, week: int) -> list[waivers.Pickup]:
+    if not _is_current_report(league, week):
+        return []
+    try:
+        by_position = {
+            pos: espn_client.get_free_agents(league, week + 1, pos) for pos in waivers.PICKUP_POSITIONS
+        }
+        pickups = waivers.suggested_pickups(by_position)
+        # Last week's points aren't in the free-agent payload; fill them in for just the picks.
+        points = _week_points(espn_client.get_player_info(league, [p.player_id for p in pickups]), week)
+        for pick in pickups:
+            pick.last_week_points = points.get(pick.player_id)
+        return pickups
+    except Exception as exc:  # noqa: BLE001 - a supplemental section should never take down the report
+        print(f"warning: suggested pickups unavailable ({exc}); omitting them.")
+        return []
+
+
 def build_week_report(
     league,
     week: int | None = None,
     power_rankings_override_path: str | Path | None = None,
+    history_dir: str | Path | None = None,
+    refresh_history: bool = False,
 ) -> WeekReport:
     week = espn_client.resolve_target_week(league, week)
     ensure_power_rankings_override(league, week, power_rankings_override_path)
@@ -311,6 +436,7 @@ def build_week_report(
     injuries = stats.notable_injuries(box_scores, _safe_game_injuries(league.year, week))
 
     individual_highlights = ordered_individual_highlights(mvp, top_by_position, bench, rookie, gamecock)
+    seasons, lifetime = _safe_history(league, week, history_dir, refresh_history)
 
     return WeekReport(
         week=week,
@@ -325,4 +451,9 @@ def build_week_report(
         score_bars=stats.score_bars(box_scores),
         season_leaders=_build_season_leaders(standings_rows, box_scores_by_week, week),
         injuries=injuries,
+        season_table=stats.season_team_table(box_scores_by_week, league.settings.position_slot_counts),
+        lifetime=lifetime,
+        waiver_report_card=_safe_waiver_report_card(league, week, box_scores),
+        pickups=_safe_pickups(league, week),
+        preview=_safe_preview(league, week, _team_contexts(espn_teams, standings_rows, box_scores), seasons),
     )

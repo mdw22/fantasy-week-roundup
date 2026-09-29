@@ -71,3 +71,124 @@ def test_season_leaders_block_renders_only_when_present():
     assert "Season Leaders" in html.split("</style>")[1]
     assert "Top Teams" in html and "Top Scorers" in html
     assert "Star Player" in html and "88.50" in html and "300.00" in html
+
+
+def _body(html):
+    return html.split("</style>")[1]
+
+
+def test_appendix_a_renders_season_table_only_when_present():
+    rep = _report([_row("A", None)])
+    assert "Appendix A" not in _body(render.render_html(rep, LEAGUE))
+    rep.season_table = [stats.SeasonTeamRow(
+        team_name="Alpha", wins=2, losses=1, ties=0, all_play_wins=30, all_play_losses=9,
+        points_for=345.6, points_against=300.0, average=115.2, high=140.1, low=90.0,
+        bench_points_lost=22.5, last_week_max_points=161.3, beat_projection=2, weeks=3,
+    )]
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "Appendix A: 2026 Season Stats" in html
+    assert "30-9" in html and "345.60" in html and "22.50" in html and "2 of 3" in html
+    assert "Wk 2 Max" in html and "161.30" in html
+
+
+def test_appendix_b_renders_lifetime_sections():
+    from src import history
+
+    rep = _report([_row("A", None)])
+    assert "Appendix B" not in _body(render.render_html(rep, LEAGUE))
+    rep.lifetime = history.LifetimeStats(
+        first_season=2022, last_season=2026,
+        managers=[
+            history.ManagerRecord("1", "Ann Active", "Alpha", True, 5, 40, 20, 1, 7000.0, 61, 2, 4),
+            history.ManagerRecord("2", "Old Timer", "Gone FC", False, 2, 10, 18, 0, 3000.0, 28, 0, 0),
+        ],
+        champions=[history.Champion(2022, "Ann Active", "Alpha")],
+        rivalries=[history.Rivalry("Ann Active", "Alpha", "Old Timer", "4-0", None, "")],
+        record_book=[history.RecordEntry("Biggest blowout", "88.10", "Ann Active", "Alpha", "2023 Week 5", "over Old Timer")],
+    )
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "Appendix B: Lifetime Stats" in html and "2022–2026" in html
+    assert "40-20-1" in html and "0.664" in html
+    assert 'class="former"' in html and "Gone FC" in html
+    assert "Champions" in html and "Record Book" in html and "Rivalry Summary" in html
+    assert "88.10" in html and "over Old Timer" in html and "(4-0)" in html
+    assert "<th>Best Record Against</th>" in html and "Owns" not in html
+
+
+def test_waiver_report_card_renders_grades_bench_tag_and_regrets():
+    from src import waivers
+
+    rep = _report([_row("A", None)])
+    assert "Waiver Report Card" not in _body(render.render_html(rep, LEAGUE))
+    rep.waiver_report_card = waivers.WaiverReportCard(
+        adds=[
+            waivers.GradedAdd("Alpha", "Hot Pickup", "WR", "SF", 24.3, True, "A", "rostered", "Alpha"),
+            waivers.GradedAdd("Beta", "Bench Guy", "RB", "DAL", 3.0, False, "D", "dropped", None),
+            waivers.GradedAdd("Beta", "Flipped", "TE", "KC", 1.0, None, "D", "elsewhere", "Gamma"),
+        ],
+        regrets=[waivers.RegretDrop("Beta", "Oops", "TE", "KC", 19.5)],
+        drops=2,
+    )
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "Week 2 Waiver Report Card" in html and "after Week 1 ended" in html
+    assert 'class="grade grade-a"' in html and 'class="grade grade-d"' in html
+    assert html.count(">Bench<") == 1 and "24.30" in html
+    assert "Current Status" in html and "On Roster" in html and ">Dropped<" in html and "On Gamma" in html
+    assert "Drops That Bit Back" in html and "19.50" in html
+
+    rep.waiver_report_card = waivers.WaiverReportCard([], [], 0)
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "No pickups this week" in html and "Drops That Bit Back" not in html
+
+
+def test_suggested_pickups_render():
+    from src import waivers
+
+    rep = _report([_row("A", None)])
+    assert "Suggested Pickups" not in _body(render.render_html(rep, LEAGUE))
+    rep.pickups = [
+        waivers.Pickup(1, "Backup Back", "RB", "DAL", 11.2, 44.5, 6.1),
+        waivers.Pickup(2, "Plain Kicker", "K", "SF", 7.0, 3.0, None),
+    ]
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "Suggested Pickups for Week 3" in html
+    assert "Why" not in html
+    assert "44.5%" in html and "11.20" in html
+
+
+def test_preview_renders_projections_picks_cards_and_part_labels():
+    from src import preview
+
+    def ctx(name, seed):
+        return preview.TeamContext(name, name[:3].upper(), f"Mgr {name}", name, 2, 1, 0, "2W", seed, 111.1, "W 120.00–99.50")
+
+    home = preview.PreviewSide(ctx("Alpha", 1), 120.5, [preview.PlayerLine("Star", "WR", "SF", 22.4)],
+                               [preview.PlayerLine("Hobbled", "RB", "DAL", 9.0, "Questionable"),
+                                preview.PlayerLine("Parked", "WR", "LAR", 0.0, "Questionable", in_ir_slot=True)])
+    away = preview.PreviewSide(ctx("Beta", 9), 101.0, [], [])
+    m = preview.MatchupPreview(home, away, (1, 3, 0))
+    rep = _report([_row("A", None)])
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "Preview" not in html and "part-label" not in html
+    rep.preview = preview.Preview(3, [m], [preview.PreviewPick("Blowout Watch", m, "Widest projected margin of the week: 19.50 points.")],
+                                  bold_prediction="Beta wins by 30.")
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "I. Week 2 Review" in html and "II. Week 3 Preview" in html
+    assert "Week 3 Projected Scores" in html and "120.50" in html
+    assert html.count('class="proj-label"') == 4  # scoreboard row + card, both sides
+    assert 'class="matchup projected"' in html and "home-winner" not in html
+    assert "IR slot" in html
+    assert "Blowout Watch" in html and "19.50 points" in html
+    assert "Bold Prediction" in html and "Beta wins by 30." in html
+    assert "Week 3 Matchup Analysis" in html and "Mgr Alpha" in html and "No. 9" in html
+    assert 'class="flag flag-questionable"' in html and "All clear" in html
+    assert "Alpha favored by 19.50" in html and "Beta leads the series 3-1" in html
+
+
+def test_letter_is_the_last_section():
+    from src import history
+
+    rep = _report([_row("A", None)])
+    rep.lifetime = history.LifetimeStats(2025, 2026, [], [], [], [])
+    html = _body(render.render_html(rep, LEAGUE))
+    assert html.index("Appendix B") < html.index("Raven From")

@@ -15,6 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / "config"
 REPORTS_DIR = BASE_DIR / "reports"
 DRAFTS_DIR = BASE_DIR / "drafts"
+HISTORY_DIR = BASE_DIR / "data" / "history"
 
 
 def load_league_config() -> dict:
@@ -25,7 +26,7 @@ def load_league_config() -> dict:
         return yaml.safe_load(f)
 
 
-def _connect_and_build_report(week: int | None) -> tuple[WeekReport, dict]:
+def _connect_and_build_report(week: int | None, refresh_history: bool = False) -> tuple[WeekReport, dict]:
     load_dotenv(BASE_DIR / ".env")
     league = espn_client.connect()
     league_config = load_league_config()
@@ -33,22 +34,25 @@ def _connect_and_build_report(week: int | None) -> tuple[WeekReport, dict]:
         league,
         week=week,
         power_rankings_override_path=CONFIG_DIR / "power_rankings_override.yaml",
+        history_dir=HISTORY_DIR,
+        refresh_history=refresh_history,
     )
     return report, league_config
 
 
-def generate_letter_draft(week: int | None = None) -> tuple[Path, int]:
+def generate_letter_draft(week: int | None = None, refresh_history: bool = False) -> tuple[Path, int]:
     """Generate the Commissioner's Letter and write it to a plain-text draft file for manual
     editing, without touching the lore file, the nickname registry, or rendering a PDF. Pair with
     --letter-file once you're happy with the edits. Returns (draft_path, resolved_week).
 
-    The draft file includes the trailing lore-note and nicknames sections (marked with
-    narrative.LORE_NOTE_MARKER / narrative.NICKNAME_MARKER) below the letter — they're there to
-    review/edit too, since they're what get folded into config/lore.md and config/nicknames.yaml
-    for next week's continuity. --letter-file parses them back out, so leaving either in place (or
-    editing it) both work; deleting a section just means nothing gets recorded there for the week."""
-    report, league_config = _connect_and_build_report(week)
-    letter, lore_note, nicknames_text = narrative.generate_commissioners_letter(
+    The draft file includes the trailing lore-note, nicknames and Bold Prediction sections (marked
+    with narrative.LORE_NOTE_MARKER / NICKNAME_MARKER / BOLD_PREDICTION_MARKER) below the letter —
+    they're there to review/edit too: the first two get folded into config/lore.md and
+    config/nicknames.yaml for next week's continuity, and the prediction goes in the preview's
+    highlights. --letter-file parses them back out, so leaving any in place (or editing it) works;
+    deleting a section just means nothing gets recorded (or shown) there for the week."""
+    report, league_config = _connect_and_build_report(week, refresh_history)
+    letter, lore_note, nicknames_text, bold_prediction = narrative.generate_commissioners_letter(
         report,
         theme=league_config["narrative_theme"],
         commissioner_name=league_config["commissioner_name"],
@@ -62,25 +66,31 @@ def generate_letter_draft(week: int | None = None) -> tuple[Path, int]:
         draft_contents += f"\n\n{narrative.LORE_NOTE_MARKER}\n{lore_note}"
     if nicknames_text:
         draft_contents += f"\n\n{narrative.NICKNAME_MARKER}\n{nicknames_text}"
+    if bold_prediction:
+        draft_contents += f"\n\n{narrative.BOLD_PREDICTION_MARKER}\n{bold_prediction}"
     draft_path.write_text(draft_contents)
     return draft_path, report.week
 
 
-def generate_report(week: int | None = None, letter_file: str | Path | None = None) -> Path:
-    report, league_config = _connect_and_build_report(week)
+def generate_report(
+    week: int | None = None, letter_file: str | Path | None = None, refresh_history: bool = False
+) -> Path:
+    report, league_config = _connect_and_build_report(week, refresh_history)
 
     if letter_file:
-        report.commissioners_letter, lore_note, nicknames_text = narrative.split_response(
+        report.commissioners_letter, lore_note, nicknames_text, bold_prediction = narrative.split_response(
             Path(letter_file).read_text()
         )
     else:
-        report.commissioners_letter, lore_note, nicknames_text = narrative.generate_commissioners_letter(
+        report.commissioners_letter, lore_note, nicknames_text, bold_prediction = narrative.generate_commissioners_letter(
             report,
             theme=league_config["narrative_theme"],
             commissioner_name=league_config["commissioner_name"],
             lore_path=CONFIG_DIR / "lore.md",
             nicknames_path=CONFIG_DIR / "nicknames.yaml",
         )
+    if report.preview:
+        report.preview.bold_prediction = narrative.bold_prediction_text(bold_prediction)
 
     factual_summary = narrative.summarize_matchups_for_lore(report)
     lore_summary = narrative.combine_lore_summary(factual_summary, lore_note)
@@ -114,15 +124,20 @@ def main():
         help="Use this file's contents as the Commissioner's Letter instead of generating one "
         "(e.g. a draft from --draft-only that you've edited)",
     )
+    parser.add_argument(
+        "--refresh-history",
+        action="store_true",
+        help="Re-download past seasons into data/history/ instead of using the cached copies",
+    )
     args = parser.parse_args()
 
     if args.draft_only:
-        draft_path, resolved_week = generate_letter_draft(week=args.week)
+        draft_path, resolved_week = generate_letter_draft(week=args.week, refresh_history=args.refresh_history)
         print(f"Letter draft written to {draft_path}")
         print(f"Edit it, then run: python -m src.main --week {resolved_week} --letter-file {draft_path}")
         return
 
-    output_path = generate_report(week=args.week, letter_file=args.letter_file)
+    output_path = generate_report(week=args.week, letter_file=args.letter_file, refresh_history=args.refresh_history)
     print(f"Report written to {output_path}")
 
 

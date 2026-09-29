@@ -20,7 +20,7 @@ class FakeTeam:
 class FakePlayer:
     def __init__(
         self, name, position, points, lineup_slot, pro_team="NFL", player_id=None,
-        projected_points=0.0,
+        projected_points=0.0, eligible_slots=None,
     ):
         self.playerId = player_id
         self.name = name
@@ -29,6 +29,7 @@ class FakePlayer:
         self.lineupSlot = lineup_slot
         self.proTeam = pro_team
         self.projected_points = projected_points
+        self.eligibleSlots = eligible_slots if eligible_slots is not None else [position, "BE", "IR"]
 
 
 class FakeBoxScore:
@@ -473,3 +474,71 @@ def test_season_top_scorers_limit_and_empty():
     assert stats.season_top_scorers({}) == []
     by_week = {1: _week("A", "B", [FakePlayer(f"P{i}", "WR", float(i), "WR", player_id=i) for i in range(1, 8)], [])}
     assert [s.player_name for s in stats.season_top_scorers(by_week, limit=3)] == ["P7", "P6", "P5"]
+
+
+FLEX = ["RB/WR/TE"]
+SLOTS = {"QB": 1, "RB": 1, "WR": 1, "RB/WR/TE": 1, "BE": 5, "IR": 1}
+
+
+def test_optimal_lineup_fills_positions_then_flex_with_best_leftover():
+    players = [
+        FakePlayer("QB1", "QB", 20.0, "QB"),
+        FakePlayer("RB1", "RB", 15.0, "RB", eligible_slots=["RB"] + FLEX),
+        FakePlayer("RB2", "RB", 12.0, "BE", eligible_slots=["RB"] + FLEX),
+        FakePlayer("WR1", "WR", 5.0, "WR", eligible_slots=["WR"] + FLEX),
+        FakePlayer("WR2", "WR", 9.0, "BE", eligible_slots=["WR"] + FLEX),
+    ]
+    # QB 20 + RB 15 + WR 9 + flex RB2 12 = 56; WR1 (5) sits.
+    assert stats.optimal_lineup_points(players, SLOTS) == 56.0
+
+
+def test_optimal_lineup_skips_a_slot_nobody_can_fill():
+    assert stats.optimal_lineup_points([FakePlayer("QB1", "QB", 20.0, "QB")], SLOTS) == 20.0
+
+
+def _season_week(home_pts, away_pts, home_proj=100.0, away_proj=100.0, third=None):
+    games = [
+        FakeBoxScore(
+            FakeTeam("A"), home_pts, home_proj, FakeTeam("B"), away_pts, away_proj,
+            home_lineup=[FakePlayer("a", "QB", home_pts, "QB"), FakePlayer("a-bench", "QB", 30.0, "BE")],
+            away_lineup=[FakePlayer("b", "QB", away_pts, "QB")],
+        )
+    ]
+    if third:
+        games.append(FakeBoxScore(
+            FakeTeam("C"), third[0], 100.0, FakeTeam("D"), third[1], 100.0,
+            home_lineup=[FakePlayer("c", "QB", third[0], "QB")],
+            away_lineup=[FakePlayer("d", "QB", third[1], "QB")],
+        ))
+    return games
+
+
+def test_season_team_table_records_all_play_and_bench_points():
+    weeks = {
+        1: _season_week(110.0, 90.0, home_proj=100.0, third=(80.0, 120.0)),
+        2: _season_week(70.0, 100.0, home_proj=95.0, third=(60.0, 50.0)),
+    }
+    rows = {r.team_name: r for r in stats.season_team_table(weeks, {"QB": 1, "BE": 1})}
+    a = rows["A"]
+    assert (a.wins, a.losses, a.ties) == (1, 1, 0)
+    # Week 1: 110 beats 90 and 80, loses to 120 -> 2-1. Week 2: 70 beats 60 and 50, loses to 100 -> 2-1.
+    assert (a.all_play_wins, a.all_play_losses) == (4, 2)
+    assert a.points_for == 180.0 and a.points_against == 190.0
+    assert a.high == 110.0 and a.low == 70.0 and a.average == 90.0
+    assert a.bench_points_lost == 0.0  # the 30-point bench QB never outscored the starter (110, 70)
+    assert a.beat_projection == 1  # 110 > 100 in week 1; 70 < 95 in week 2
+    assert a.weeks == 2
+
+
+def test_season_team_table_counts_points_left_on_bench():
+    weeks = {1: _season_week(20.0, 10.0)}  # starter 20, bench QB 30 -> 10 points left
+    rows = {r.team_name: r for r in stats.season_team_table(weeks, {"QB": 1, "BE": 1})}
+    assert rows["A"].bench_points_lost == 10.0
+    assert rows["A"].last_week_max_points == 30.0  # the 30-point bench QB, not the 20 started
+    assert rows["B"].bench_points_lost == 0.0
+
+
+def test_season_team_table_sorts_best_record_first():
+    weeks = {1: _season_week(110.0, 90.0, third=(80.0, 120.0))}
+    order = [r.team_name for r in stats.season_team_table(weeks, {"QB": 1})]
+    assert order[:2] == ["D", "A"]  # both 1-0; D has more points

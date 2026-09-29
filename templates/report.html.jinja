@@ -17,6 +17,8 @@
 {%- endif -%}
 {%- endmacro %}
 
+{% macro record(w, l, t) -%}{{ w }}-{{ l }}{% if t %}-{{ t }}{% endif %}{%- endmacro %}
+
 {% macro wax_seal(css_class) %}
 {% set monogram = league.seal_monogram if league.seal_monogram else (league.commissioner_name.split() | last)[0] | upper %}
 <div class="wax-seal {{ css_class }}">
@@ -55,6 +57,7 @@
 </div>
 
 <div class="section">
+  {% if report.preview %}<div class="part-label">I. Week {{ report.week }} Review</div>{% endif %}
   <h2>Week {{ report.week }} Scoreboard</h2>
   {% for m in report.matchups %}
   <div class="matchup {{ 'home-winner' if m.winner_name == m.home_team_name else 'away-winner' }}">
@@ -204,6 +207,325 @@
   </table>
 </div>
 
+{% if report.waiver_report_card %}
+{% set card = report.waiver_report_card %}
+<div class="section">
+  <h2>Week {{ report.week }} Waiver Report Card</h2>
+  <p class="appendix-note">Pickups made {% if report.week > 1 %}after Week {{ report.week - 1 }} ended {% endif %}through the
+    end of Week {{ report.week }}, graded on what each player scored in Week {{ report.week }}: A 20+, B 12+, C 6+, D under 6,
+    F zero or less. Current status is where the player is now; "Dropped" means he's back on waivers or free agency.
+    Moves made after Monday night count toward next week's card.</p>
+  {% if card.adds %}
+  <table class="waiver-table">
+    <thead>
+      <tr><th>Team</th><th>Player</th><th>Current Status</th><th>Wk {{ report.week }} Pts</th><th>Grade</th></tr>
+    </thead>
+    <tbody>
+      {% for a in card.adds %}
+      <tr>
+        <td>{{ display_name(a.team_name) }}</td>
+        <td>{{ a.player_name }} <span class="highlight-detail">({{ a.position }} — {{ a.pro_team }})</span></td>
+        <td>
+          {%- if a.status == "rostered" %}On Roster
+          {%- elif a.status == "dropped" %}<span class="status-dropped">Dropped</span>
+          {%- else %}On {{ display_name(a.current_team) }}{% endif -%}
+        </td>
+        <td>
+          {{ "%.2f"|format(a.points) if a.points is not none else "—" }}
+          {% if a.started is false %}<span class="unrostered-tag">Bench</span>{% endif %}
+        </td>
+        <td><span class="grade grade-{{ a.grade | lower if a.grade != '—' else 'none' }}">{{ a.grade }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No pickups this week — every house stood pat.</p>
+  {% endif %}
+  {% if card.regrets %}
+  <h3 class="subhead">Drops That Bit Back</h3>
+  <table>
+    <thead>
+      <tr><th>Dropped By</th><th>Player</th><th>Wk {{ report.week }} Pts</th></tr>
+    </thead>
+    <tbody>
+      {% for r in card.regrets %}
+      <tr>
+        <td>{{ display_name(r.team_name) }}</td>
+        <td>{{ r.player_name }} <span class="highlight-detail">({{ r.position }} — {{ r.pro_team }})</span></td>
+        <td>{{ "%.2f"|format(r.points) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endif %}
+
+{% macro series(m) -%}
+{%- if m.head_to_head is none -%}
+{%- else -%}
+{%- set hw, aw, ties = m.head_to_head -%}
+{%- if hw + aw + ties == 0 -%}First regular-season meeting
+{%- elif hw > aw -%}{{ display_name(m.home.team.team_name) }} leads the series {{ record(hw, aw, ties) }}
+{%- elif aw > hw -%}{{ display_name(m.away.team.team_name) }} leads the series {{ record(aw, hw, ties) }}
+{%- else -%}Series tied {{ record(hw, aw, ties) }}
+{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro player_lines(players) -%}
+{%- for p in players -%}
+<div>{{ p.name }} <span class="highlight-detail">{{ p.position }} · {{ "%.1f"|format(p.projected) }}</span></div>
+{%- endfor -%}
+{%- endmacro %}
+
+{% macro flag_lines(players) -%}
+{%- for p in players -%}
+<div><span class="flag flag-{{ p.flag | lower }}">{{ p.flag }}</span> {{ p.name }} <span class="highlight-detail">{{ p.position }}{% if p.in_ir_slot %} · IR slot{% endif %}</span></div>
+{%- else -%}<span class="highlight-detail">All clear</span>
+{%- endfor -%}
+{%- endmacro %}
+
+{% if report.preview %}
+{% set pv = report.preview %}
+<div class="section">
+  <div class="part-label">II. Week {{ pv.week }} Preview</div>
+  <h2>Week {{ pv.week }} Projected Scores</h2>
+  <p class="appendix-note">ESPN projections for lineups as they stand {{ report.report_date.strftime("%A") }}; managers
+    can still change them.</p>
+  {% for m in pv.matchups %}
+  <div class="matchup projected">
+    <div class="team">{{ display_name(m.home.team.team_name) }}</div>
+    <div class="score home">{{ "%.2f"|format(m.home.projected) }} <span class="proj-label">Proj</span></div>
+    <div class="vs">vs</div>
+    <div class="score away">{{ "%.2f"|format(m.away.projected) }} <span class="proj-label">Proj</span></div>
+    <div class="team">{{ display_name(m.away.team.team_name) }}</div>
+  </div>
+  {% endfor %}
+
+  {% if pv.picks or pv.bold_prediction %}
+  <h3 class="subhead">Week {{ pv.week }} Highlights</h3>
+  <table class="picks-table">
+    <thead>
+      <tr><th>Category</th><th>Matchup</th><th>Why</th></tr>
+    </thead>
+    <tbody>
+      {% for pick in pv.picks %}
+      <tr>
+        <td>{{ pick.label }}</td>
+        <td>
+          {% if pick.team_name %}{{ display_name(pick.team_name) }}
+            <div class="highlight-detail">vs. {{ display_name((pick.matchup.favorite.team.team_name)) }}</div>
+          {% else %}{{ display_name(pick.matchup.home.team.team_name) }}
+            <div class="highlight-detail">vs. {{ display_name(pick.matchup.away.team.team_name) }}</div>{% endif %}
+        </td>
+        <td>{{ pick.reason }}</td>
+      </tr>
+      {% endfor %}
+      {% if pv.bold_prediction %}
+      <tr class="spotlight-row">
+        <td><span class="spotlight-mark"></span>Bold Prediction</td>
+        <td colspan="2">{{ pv.bold_prediction }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h2>Week {{ pv.week }} Matchup Analysis</h2>
+  {% for m in pv.matchups %}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-side">
+        <div class="card-team">{{ display_name(m.home.team.team_name) }}</div>
+        <div class="highlight-detail">{{ m.home.team.abbrev }} · {{ m.home.team.manager }}</div>
+      </div>
+      <div class="card-proj">{{ "%.2f"|format(m.home.projected) }} <span class="proj-label">Proj</span></div>
+      <div class="vs">vs</div>
+      <div class="card-proj">{{ "%.2f"|format(m.away.projected) }} <span class="proj-label">Proj</span></div>
+      <div class="card-side right">
+        <div class="card-team">{{ display_name(m.away.team.team_name) }}</div>
+        <div class="highlight-detail">{{ m.away.team.abbrev }} · {{ m.away.team.manager }}</div>
+      </div>
+    </div>
+    <table class="card-table">
+      <tbody>
+        <tr><td>{{ m.home.team.record }} <span class="highlight-detail">({{ m.home.team.streak }}) · No. {{ m.home.team.seed }} seed</span></td>
+            <th>Record</th>
+            <td><span class="highlight-detail">No. {{ m.away.team.seed }} seed · ({{ m.away.team.streak }})</span> {{ m.away.team.record }}</td></tr>
+        <tr><td>{{ "%.2f"|format(m.home.team.average) }}</td><th>Season Avg</th><td>{{ "%.2f"|format(m.away.team.average) }}</td></tr>
+        {% if m.home.team.last_result or m.away.team.last_result %}
+        <tr><td>{{ m.home.team.last_result }}</td><th>Week {{ report.week }}</th><td>{{ m.away.team.last_result }}</td></tr>
+        {% endif %}
+        <tr><td>{{ player_lines(m.home.top_players) }}</td><th>Top Projected</th><td>{{ player_lines(m.away.top_players) }}</td></tr>
+        <tr><td>{{ flag_lines(m.home.flagged) }}</td><th>Lineup Watch</th><td>{{ flag_lines(m.away.flagged) }}</td></tr>
+      </tbody>
+    </table>
+    <div class="card-foot">
+      {{ display_name(m.favorite.team.team_name) }} favored by {{ "%.2f"|format(m.gap) }}
+      {%- set s = series(m) %}{% if s %} · {{ s }}{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if report.pickups %}
+<div class="section">
+  <h2>Suggested Pickups for Week {{ report.week + 1 }}</h2>
+  <p class="appendix-note">Best available free agents by ESPN's Week {{ report.week + 1 }} projection, as of
+    {{ report.report_date.strftime("%A, %B %-d") }}. Waivers clear Wednesday morning.</p>
+  <table class="pickups-table">
+    <thead>
+      <tr><th>Pos</th><th>Player</th><th>Proj.</th><th>Wk {{ report.week }} Pts</th><th>Rostered</th></tr>
+    </thead>
+    <tbody>
+      {% for p in report.pickups %}
+      <tr>
+        <td>{{ p.position }}</td>
+        <td>{{ p.player_name }} <span class="highlight-detail">({{ p.pro_team }})</span></td>
+        <td>{{ "%.2f"|format(p.projected) }}</td>
+        <td>{{ "%.2f"|format(p.last_week_points) if p.last_week_points is not none else "—" }}</td>
+        <td>{{ "%.1f%%"|format(p.percent_owned) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if report.is_season_finale and report.season_extras %}
+<div class="section">
+  <h2>Season Highlights</h2>
+  {# Season-finale-only blocks: PF trendlines, top players, All-Fantasy Team, Team MVPs,
+     best single-week performances, season stats appendix. Populated once report_data.py
+     grows a season-finale code path (build order item 5 in the design spec). #}
+</div>
+{% endif %}
+
+{% if report.season_table %}
+<div class="section appendix">
+  <h2>Appendix A: {{ report.season_year }} Season Stats</h2>
+  <p class="appendix-note">Through Week {{ report.week }}. All-play is the record each team would have if it played every
+    other team every week. Bench pts lost is how many more points the best possible lineup would have scored, and
+    Wk {{ report.week }} max is what that best possible lineup would have scored in Week {{ report.week }}.</p>
+  <table class="season-table">
+    <thead>
+      <tr>
+        <th>Team</th><th>Record</th><th>All-Play</th><th>PF</th><th>PA</th><th>Avg</th>
+        <th>High</th><th>Low</th><th>Bench Pts Lost</th><th>Wk {{ report.week }} Max</th><th>Beat Proj.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in report.season_table %}
+      <tr>
+        <td>{{ display_name(row.team_name) }}</td>
+        <td>{{ record(row.wins, row.losses, row.ties) }}</td>
+        <td>{{ row.all_play_wins }}-{{ row.all_play_losses }}</td>
+        <td>{{ "%.2f"|format(row.points_for) }}</td>
+        <td>{{ "%.2f"|format(row.points_against) }}</td>
+        <td>{{ "%.2f"|format(row.average) }}</td>
+        <td>{{ "%.2f"|format(row.high) }}</td>
+        <td>{{ "%.2f"|format(row.low) }}</td>
+        <td>{{ "%.2f"|format(row.bench_points_lost) }}</td>
+        <td>{{ "%.2f"|format(row.last_week_max_points) }}</td>
+        <td>{{ row.beat_projection }} of {{ row.weeks }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if report.lifetime %}
+{% set life = report.lifetime %}
+<div class="section appendix">
+  <h2>Appendix B: Lifetime Stats</h2>
+  <p class="appendix-note">{{ life.first_season }}–{{ life.last_season }}, regular season only. Managers are tracked
+    across team renames{% if life.managers | rejectattr("active") | list %}; <span class="former">former managers</span>
+    are shown in italics{% endif %}.</p>
+
+  <h3 class="subhead">All-Time Records</h3>
+  <table class="alltime-table">
+    <thead>
+      <tr><th>Manager</th><th>Team</th><th>Seasons</th><th>Record</th><th>Win %</th><th>PF</th><th>Avg</th><th>Titles</th><th>Playoffs</th></tr>
+    </thead>
+    <tbody>
+      {% for m in life.managers %}
+      <tr class="{{ '' if m.active else 'former' }}">
+        <td>{{ m.name }}</td>
+        <td>{{ display_name(m.team_name) }}</td>
+        <td>{{ m.seasons }}</td>
+        <td>{{ record(m.wins, m.losses, m.ties) }}</td>
+        <td>{{ "%.3f"|format(m.win_pct) }}</td>
+        <td>{{ "%.2f"|format(m.points_for) }}</td>
+        <td>{{ "%.2f"|format(m.average) }}</td>
+        <td>{{ m.titles or "—" }}</td>
+        <td>{{ m.playoff_apps or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if life.champions %}
+  <h3 class="subhead">Champions</h3>
+  <div class="champions">
+    {% for c in life.champions %}
+    <div class="champion">
+      <div class="champion-year">{{ c.season }}</div>
+      <div class="champion-team">{{ display_name(c.team_name) }}</div>
+      <div class="highlight-detail">{{ c.manager }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if life.record_book %}
+  <div class="keep-together">
+  <h3 class="subhead">Record Book</h3>
+  <table class="record-book">
+    <thead>
+      <tr><th>Record</th><th>Value</th><th>Manager</th><th>When</th></tr>
+    </thead>
+    <tbody>
+      {% for e in life.record_book %}
+      <tr>
+        <td>{{ e.label }}</td>
+        <td>{{ e.value }}{% if e.detail %} <span class="highlight-detail">{{ e.detail }}</span>{% endif %}</td>
+        <td>{{ e.manager }} <span class="highlight-detail">({{ display_name(e.team_name) }})</span></td>
+        <td>{{ e.when }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+
+  {% if life.rivalries %}
+  <h3 class="subhead">Rivalry Summary</h3>
+  <p class="appendix-note">Minimum two meetings. Best Record Against is the opponent this manager has the best
+    winning record against; Nemesis is the opponent with the best winning record against this manager.</p>
+  <table class="rivalry-table">
+    <thead>
+      <tr><th>Manager</th><th>Best Record Against</th><th>Nemesis</th></tr>
+    </thead>
+    <tbody>
+      {% for r in life.rivalries %}
+      <tr>
+        <td>{{ r.manager }}</td>
+        <td>{% if r.rival %}{{ r.rival }} <span class="highlight-detail">({{ r.rival_record }})</span>{% else %}—{% endif %}</td>
+        <td>{% if r.nemesis %}{{ r.nemesis }} <span class="highlight-detail">({{ r.nemesis_record }})</span>{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="section letter">
   <h2>Raven From {{ league.commissioner_name }}</h2>
   <img class="divider-ornament" src="assets/divider-ornament.svg" alt="">
@@ -218,12 +540,3 @@
     <div class="signature">{{ league.commissioner_name }}</div>
   </div>
 </div>
-
-{% if report.is_season_finale and report.season_extras %}
-<div class="section">
-  <h2>Season Highlights</h2>
-  {# Season-finale-only blocks: PF trendlines, top players, All-Fantasy Team, Team MVPs,
-     best single-week performances, season stats appendix. Populated once report_data.py
-     grows a season-finale code path (build order item 5 in the design spec). #}
-</div>
-{% endif %}
