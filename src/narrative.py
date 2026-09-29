@@ -54,6 +54,12 @@ Write one flowing narrative, roughly 500-800 words, that:
   restating a table
 - Stays in-theme throughout
 - Weaves in the team/individual highlights and standings context where they add color
+- Each matchup may list an overperformer and an underperformer — the starter (on either side) who
+  most beat or missed their own pregame projection (`points` vs. `projected_points`). When one
+  helps explain *why* that matchup went the way it did, feel free to point to it as part of the
+  story (e.g. a team's win credited to someone blowing past expectations, or a loss to a projected
+  stud busting) — this is optional color like the other highlight data, not a mandatory checklist
+  item; skip it when it doesn't add anything or the margin was decided by other factors
 - If the structured data lists any injuries, you may work in a mention of one or two if they fit
   naturally (e.g. a fantasy team's win explained by a key player leaving the game) — this is
   optional color, not a requirement; skip it entirely on a week where none feel narratively
@@ -101,6 +107,9 @@ def _player_stat_to_dict(stat: PlayerStat) -> dict:
         "pro_team": stat.pro_team,
         "position": stat.position,
         "points": round(stat.points, 2),
+        "projected_points": (
+            round(stat.projected_points, 2) if stat.projected_points is not None else None
+        ),
     }
 
 
@@ -136,6 +145,8 @@ def build_week_summary(report: WeekReport) -> dict:
                 "margin": round(abs(m.home_score - m.away_score), 2),
                 "projected_margin_home": round(m.home_projected - m.away_projected, 2),
                 "winner": m.winner_name,
+                "overperformer": _player_stat_to_dict(m.overperformer) if m.overperformer else None,
+                "underperformer": _player_stat_to_dict(m.underperformer) if m.underperformer else None,
             }
             for m in report.matchups
         ],

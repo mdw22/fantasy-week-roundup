@@ -39,6 +39,10 @@ class MatchupResult:
     home_projected: float
     away_projected: float
     winner_name: str
+    # The starter (either team) who most exceeded/fell short of their own projection this
+    # matchup -- letter-only context, not rendered in the PDF. See stats.matchup_standout_performers.
+    overperformer: stats.PlayerStat | None = None
+    underperformer: stats.PlayerStat | None = None
 
 
 @dataclass
@@ -223,20 +227,24 @@ def build_week_report(
     if week > 1:
         prior_scores = stats.team_scores(box_scores_by_week[week - 1])
 
-    matchups = [
-        MatchupResult(
-            home_team_name=bs.home_team.team_name,
-            away_team_name=bs.away_team.team_name,
-            home_score=bs.home_score,
-            away_score=bs.away_score,
-            home_projected=bs.home_projected,
-            away_projected=bs.away_projected,
-            winner_name=(
-                bs.home_team.team_name if bs.home_score >= bs.away_score else bs.away_team.team_name
-            ),
+    matchups = []
+    for bs in box_scores:
+        overperformer, underperformer = stats.matchup_standout_performers(bs)
+        matchups.append(
+            MatchupResult(
+                home_team_name=bs.home_team.team_name,
+                away_team_name=bs.away_team.team_name,
+                home_score=bs.home_score,
+                away_score=bs.away_score,
+                home_projected=bs.home_projected,
+                away_projected=bs.away_projected,
+                winner_name=(
+                    bs.home_team.team_name if bs.home_score >= bs.away_score else bs.away_team.team_name
+                ),
+                overperformer=overperformer,
+                underperformer=underperformer,
+            )
         )
-        for bs in box_scores
-    ]
 
     espn_teams = espn_client.get_standings(league)
     power_rankings = espn_client.get_power_rankings(league, week)

@@ -206,6 +206,50 @@ def test_bench_mvp():
     assert bench.points == 15.0
 
 
+def _standout_performer_box_score():
+    return FakeBoxScore(
+        home_team=FakeTeam("House Stark"), home_score=0, home_projected=0,
+        away_team=FakeTeam("House Lannister"), away_score=0, away_projected=0,
+        home_lineup=[
+            FakePlayer("Jon Snow", "QB", 30.0, "QB", projected_points=20.0),   # delta +10
+            FakePlayer("Bran Stark", "TE", 50.0, "BE", projected_points=0.0),  # delta +50, but benched
+        ],
+        away_lineup=[
+            FakePlayer("Tyrion Lannister", "WR", 8.0, "WR", projected_points=20.0),   # delta -12
+            FakePlayer("Cersei Lannister", "TE", 10.0, "TE", projected_points=10.0),  # delta 0
+        ],
+    )
+
+
+def test_matchup_standout_performers_picks_biggest_over_and_under_among_starters():
+    over, under = stats.matchup_standout_performers(_standout_performer_box_score())
+    assert over.player_name == "Jon Snow"
+    assert over.team_name == "House Stark"
+    assert over.projected_points == 20.0
+    assert over.detail == "+10.0 vs. 20.0 projected"
+    assert under.player_name == "Tyrion Lannister"
+    assert under.team_name == "House Lannister"
+    assert under.detail == "-12.0 vs. 20.0 projected"
+
+
+def test_matchup_standout_performers_excludes_bench_even_with_the_biggest_delta():
+    over, under = stats.matchup_standout_performers(_standout_performer_box_score())
+    assert over.player_name != "Bran Stark"
+    assert under.player_name != "Bran Stark"
+
+
+def test_matchup_standout_performers_none_with_no_starters():
+    bs = FakeBoxScore(
+        home_team=FakeTeam("House Stark"), home_score=0, home_projected=0,
+        away_team=FakeTeam("House Lannister"), away_score=0, away_projected=0,
+        home_lineup=[FakePlayer("Bench Only", "QB", 10.0, "BE")],
+        away_lineup=[],
+    )
+    over, under = stats.matchup_standout_performers(bs)
+    assert over is None
+    assert under is None
+
+
 def _rookie_gamecock_box_scores():
     return [
         FakeBoxScore(

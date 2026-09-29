@@ -42,6 +42,9 @@ class PlayerStat:
     position: str
     points: float
     detail: str = ""
+    # ESPN's pregame projection for this week, when available -- None for Rookie Spotlight/
+    # Gamecock of the Week candidates, which come from nflreadpy and have no ESPN projection.
+    projected_points: float | None = None
 
 
 @dataclass
@@ -255,7 +258,10 @@ def individual_mvp(box_scores: list) -> PlayerStat | None:
     if not starters:
         return None
     team_name, player = max(starters, key=lambda tp: tp[1].points)
-    return PlayerStat(player.name, team_name, player.proTeam, player.position, player.points)
+    return PlayerStat(
+        player.name, team_name, player.proTeam, player.position, player.points,
+        projected_points=player.projected_points,
+    )
 
 
 def top_scorer_by_position(box_scores: list) -> dict[str, PlayerStat]:
@@ -267,7 +273,8 @@ def top_scorer_by_position(box_scores: list) -> dict[str, PlayerStat]:
         current = best_by_position.get(player.position)
         if current is None or player.points > current.points:
             best_by_position[player.position] = PlayerStat(
-                player.name, team_name, player.proTeam, player.position, player.points
+                player.name, team_name, player.proTeam, player.position, player.points,
+                projected_points=player.projected_points,
             )
     return best_by_position
 
@@ -281,7 +288,41 @@ def bench_mvp(box_scores: list) -> PlayerStat | None:
     if not bench:
         return None
     team_name, player = max(bench, key=lambda tp: tp[1].points)
-    return PlayerStat(player.name, team_name, player.proTeam, player.position, player.points)
+    return PlayerStat(
+        player.name, team_name, player.proTeam, player.position, player.points,
+        projected_points=player.projected_points,
+    )
+
+
+def matchup_standout_performers(bs) -> tuple[PlayerStat | None, PlayerStat | None]:
+    """For one matchup, the starter (either team) who most exceeded their projection and the one
+    who fell shortest of it, by points - projected_points -- context for the letter to explain
+    *why* that specific matchup went the way it did, not just what the final score was. Starters
+    only, same convention as individual_mvp/top_scorer_by_position. (None, None) if neither
+    lineup has a starter."""
+    starters = [
+        (team_name, p)
+        for team_name, p in _iter_lineup_players([bs])
+        if p.lineupSlot not in BENCH_SLOTS
+    ]
+    if not starters:
+        return None, None
+
+    def delta(tp) -> float:
+        return tp[1].points - (tp[1].projected_points or 0)
+
+    over_team, over_player = max(starters, key=delta)
+    under_team, under_player = min(starters, key=delta)
+
+    def build(team_name: str, player) -> PlayerStat:
+        d = delta((team_name, player))
+        return PlayerStat(
+            player.name, team_name, player.proTeam, player.position, player.points,
+            detail=f"{d:+.1f} vs. {player.projected_points or 0:.1f} projected",
+            projected_points=player.projected_points,
+        )
+
+    return build(over_team, over_player), build(under_team, under_player)
 
 
 def _rostered_team_by_espn_id(box_scores: list) -> dict[int, str]:
