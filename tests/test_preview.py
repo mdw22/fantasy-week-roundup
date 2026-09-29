@@ -90,3 +90,12 @@ def test_upset_alert_falls_back_to_closest_unused_game_and_playoff_pick_is_optio
 
 def test_no_matchups_no_picks():
     assert preview.pick_highlights([], 8) == []
+
+
+def test_closeness_bands_by_projected_gap():
+    def gap(g):
+        return _matchup(_ctx("A", 1, 1, 1, 100), _ctx("B", 1, 1, 2, 100), 100 + g, 100).closeness
+
+    assert [gap(0.4), gap(2.99), gap(3.0), gap(9.99), gap(10.0), gap(40)] == [
+        "toss-up", "toss-up", "edge", "edge", "clear", "clear",
+    ]

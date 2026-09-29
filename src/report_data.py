@@ -78,6 +78,15 @@ class WeekReport:
     preview: preview.Preview | None = None
     commissioners_letter: str | None = None
     season_extras: dict = field(default_factory=dict)
+    # Big Report mode renders the appendices (season_table, lifetime) too; Standard Weekly mode
+    # hides them. Both modes build the same data -- this only decides what the PDF shows, so the
+    # Big Report is turned off, never removed. main.py sets it from the schedule / CLI flags.
+    big_report: bool = True
+
+    @property
+    def top_pickups(self) -> list[waivers.Pickup]:
+        """One pickup per position: the Standard Weekly report's waiver section."""
+        return waivers.best_per_position(self.pickups)
 
 
 def load_power_rankings_override(path: str | Path | None, week: int) -> dict[str, int]:

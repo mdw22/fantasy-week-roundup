@@ -151,6 +151,17 @@ def waiver_report_card(
     return WaiverReportCard(adds, regrets, drops)
 
 
+def best_per_position(pickups: list[Pickup]) -> list[Pickup]:
+    """The top pickup at each position (suggested_pickups lists them best-first within a position),
+    for the Standard Weekly report's shorter waiver section."""
+    seen, best = set(), []
+    for p in pickups:
+        if p.position not in seen:
+            seen.add(p.position)
+            best.append(p)
+    return best
+
+
 def suggested_pickups(
     free_agents_by_position: dict[str, list],
     per_position: int = PICKUPS_PER_POSITION,

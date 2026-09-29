@@ -19,6 +19,25 @@
 
 {% macro record(w, l, t) -%}{{ w }}-{{ l }}{% if t %}-{{ t }}{% endif %}{%- endmacro %}
 
+{% macro pickups_table(picks) %}
+<table class="pickups-table">
+  <thead>
+    <tr><th>Pos</th><th>Player</th><th>Proj.</th><th>Wk {{ report.week }} Pts</th><th>Rostered</th></tr>
+  </thead>
+  <tbody>
+    {% for p in picks %}
+    <tr>
+      <td>{{ p.position }}</td>
+      <td>{{ p.player_name }} <span class="highlight-detail">({{ p.pro_team }})</span></td>
+      <td>{{ "%.2f"|format(p.projected) }}</td>
+      <td>{{ "%.2f"|format(p.last_week_points) if p.last_week_points is not none else "—" }}</td>
+      <td>{{ "%.1f%%"|format(p.percent_owned) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
 {% macro wax_seal(css_class) %}
 {% set monogram = league.seal_monogram if league.seal_monogram else (league.commissioner_name.split() | last)[0] | upper %}
 <div class="wax-seal {{ css_class }}">
@@ -46,7 +65,7 @@
   <img class="corner bl" src="assets/corner-flourish.svg" alt="">
   <img class="corner br" src="assets/corner-flourish.svg" alt="">
   {% if asset_exists(league.logo_path) %}<img class="logo" src="{{ league.logo_path }}" alt="">{% else %}{{ wax_seal("seal") }}{% endif %}
-  <div class="eyebrow">Weekly Recap</div>
+  <div class="eyebrow">{{ "Big Edition" if report.big_report else "Weekly Recap" }}</div>
   <div class="league-name">{{ league.league_name }}</div>
   <div class="rule"></div>
   <div class="week-title">
@@ -207,7 +226,8 @@
   </table>
 </div>
 
-{% if report.waiver_report_card %}
+{# Standard Weekly shows the short Waiver Report below instead; the graded card is Big-only. #}
+{% if report.big_report and report.waiver_report_card %}
 {% set card = report.waiver_report_card %}
 <div class="section">
   <h2>Week {{ report.week }} Waiver Report Card</h2>
@@ -259,6 +279,15 @@
     </tbody>
   </table>
   {% endif %}
+</div>
+{% endif %}
+
+{% if not report.big_report and report.top_pickups %}
+<div class="section">
+  <h2>Week {{ report.week + 1 }} Waiver Report</h2>
+  <p class="appendix-note">The best available free agent at each position by ESPN's Week {{ report.week + 1 }}
+    projection, as of {{ report.report_date.strftime("%A, %B %-d") }}. Waivers clear Wednesday morning.</p>
+  {{ pickups_table(report.top_pickups) }}
 </div>
 {% endif %}
 
@@ -334,6 +363,7 @@
   {% endif %}
 </div>
 
+{% if report.big_report %}
 <div class="section">
   <h2>Week {{ pv.week }} Matchup Analysis</h2>
   {% for m in pv.matchups %}
@@ -371,29 +401,51 @@
   </div>
   {% endfor %}
 </div>
+{% else %}
+{# Standard Weekly: one compact card per game -- record, projection, key player, lineup watch,
+   and a one-line takeaway. The full cards above are the Big Report's version. #}
+<div class="section">
+  <h2>Week {{ pv.week }} Matchups</h2>
+  {% for m in pv.matchups %}
+  <div class="card compact">
+    <div class="card-head">
+      <div class="card-side">
+        <div class="card-team">{{ display_name(m.home.team.team_name) }}</div>
+        <div class="highlight-detail">{{ m.home.team.record }} ({{ m.home.team.streak }}) · No. {{ m.home.team.seed }} seed</div>
+      </div>
+      <div class="card-proj">{{ "%.2f"|format(m.home.projected) }} <span class="proj-label">Proj</span></div>
+      <div class="vs">vs</div>
+      <div class="card-proj">{{ "%.2f"|format(m.away.projected) }} <span class="proj-label">Proj</span></div>
+      <div class="card-side right">
+        <div class="card-team">{{ display_name(m.away.team.team_name) }}</div>
+        <div class="highlight-detail">No. {{ m.away.team.seed }} seed · {{ m.away.team.record }} ({{ m.away.team.streak }})</div>
+      </div>
+    </div>
+    <table class="card-table">
+      <tbody>
+        <tr><td>{{ player_lines(m.home.top_players[:1]) }}</td><th>Key Player</th><td>{{ player_lines(m.away.top_players[:1]) }}</td></tr>
+        <tr><td>{{ flag_lines(m.home.flagged) }}</td><th>Lineup Watch</th><td>{{ flag_lines(m.away.flagged) }}</td></tr>
+      </tbody>
+    </table>
+    <div class="card-foot">
+      {%- set fav = display_name(m.favorite.team.team_name) %}
+      {%- if m.closeness == "toss-up" %}Toss-up: projected {{ "%.2f"|format(m.gap) }} apart
+      {%- elif m.closeness == "edge" %}Slight edge to {{ fav }}, by {{ "%.2f"|format(m.gap) }}
+      {%- else %}{{ fav }} favored by {{ "%.2f"|format(m.gap) }}{% endif %}
+      {%- set s = series(m) %}{% if s %} · {{ s }}{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 {% endif %}
 
-{% if report.pickups %}
+{% if report.big_report and report.pickups %}
 <div class="section">
   <h2>Suggested Pickups for Week {{ report.week + 1 }}</h2>
   <p class="appendix-note">Best available free agents by ESPN's Week {{ report.week + 1 }} projection, as of
     {{ report.report_date.strftime("%A, %B %-d") }}. Waivers clear Wednesday morning.</p>
-  <table class="pickups-table">
-    <thead>
-      <tr><th>Pos</th><th>Player</th><th>Proj.</th><th>Wk {{ report.week }} Pts</th><th>Rostered</th></tr>
-    </thead>
-    <tbody>
-      {% for p in report.pickups %}
-      <tr>
-        <td>{{ p.position }}</td>
-        <td>{{ p.player_name }} <span class="highlight-detail">({{ p.pro_team }})</span></td>
-        <td>{{ "%.2f"|format(p.projected) }}</td>
-        <td>{{ "%.2f"|format(p.last_week_points) if p.last_week_points is not none else "—" }}</td>
-        <td>{{ "%.1f%%"|format(p.percent_owned) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {{ pickups_table(report.pickups) }}
 </div>
 {% endif %}
 
@@ -406,7 +458,8 @@
 </div>
 {% endif %}
 
-{% if report.season_table %}
+{# Appendices: Big Report mode only (report.big_report). The data is built every week either way. #}
+{% if report.big_report and report.season_table %}
 <div class="section appendix">
   <h2>Appendix A: {{ report.season_year }} Season Stats</h2>
   <p class="appendix-note">Through Week {{ report.week }}. All-play is the record each team would have if it played every
@@ -440,7 +493,7 @@
 </div>
 {% endif %}
 
-{% if report.lifetime %}
+{% if report.big_report and report.lifetime %}
 {% set life = report.lifetime %}
 <div class="section appendix">
   <h2>Appendix B: Lifetime Stats</h2>

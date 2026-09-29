@@ -97,3 +97,11 @@ def test_suggested_pickups_rank_by_projection_and_skip_unavailable():
 def test_week_end_is_morning_after_last_game_day_eastern():
     end = nfl_supplemental.week_end_from_game_days(["2026-09-24", "2026-09-28", "2026-09-27"])
     assert end.isoformat() == "2026-09-29T06:00:00-04:00"
+
+
+def test_best_per_position_keeps_the_first_pick_at_each_position():
+    picks = [
+        waivers.Pickup(1, "QB1", "QB", "SF", 18.0, 3.0, None), waivers.Pickup(2, "QB2", "QB", "SF", 16.0, 3.0, None),
+        waivers.Pickup(3, "RB1", "RB", "SF", 9.0, 3.0, None), waivers.Pickup(4, "K1", "K", "SF", 8.0, 3.0, None),
+    ]
+    assert [p.player_name for p in waivers.best_per_position(picks)] == ["QB1", "RB1", "K1"]

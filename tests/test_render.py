@@ -192,3 +192,50 @@ def test_letter_is_the_last_section():
     rep.lifetime = history.LifetimeStats(2025, 2026, [], [], [], [])
     html = _body(render.render_html(rep, LEAGUE))
     assert html.index("Appendix B") < html.index("Raven From")
+
+
+def test_standard_mode_hides_appendices_but_keeps_everything_else():
+    from src import history, preview
+
+    rep = _report([_row("A", None)])
+    rep.season_table = [stats.SeasonTeamRow(
+        team_name="Alpha", wins=2, losses=1, ties=0, all_play_wins=30, all_play_losses=9,
+        points_for=345.6, points_against=300.0, average=115.2, high=140.1, low=90.0,
+        bench_points_lost=22.5, last_week_max_points=161.3, beat_projection=2, weeks=3,
+    )]
+    rep.lifetime = history.LifetimeStats(2025, 2026, [], [history.Champion(2025, "Ann", "Alpha")], [], [])
+
+    def ctx(name):
+        return preview.TeamContext(name, name[:3].upper(), f"Mgr {name}", name, 2, 1, 0, "2W", 1, 111.1, "")
+
+    m = preview.MatchupPreview(preview.PreviewSide(ctx("Alpha"), 120.5, [], []),
+                               preview.PreviewSide(ctx("Beta"), 101.0, [], []), (1, 3, 0))
+    rep.preview = preview.Preview(3, [m], [])
+    from src import waivers
+
+    rep.waiver_report_card = waivers.WaiverReportCard(
+        [waivers.GradedAdd("Alpha", "Graded Guy", "WR", "SF", 24.3, True, "A", "rostered", "Alpha")], [], 0,
+    )
+    rep.pickups = [
+        waivers.Pickup(1, "Best QB", "QB", "SF", 18.0, 3.0, 20.0), waivers.Pickup(2, "Second QB", "QB", "SF", 16.0, 3.0, 9.0),
+        waivers.Pickup(3, "Best K", "K", "SF", 9.0, 3.0, 8.0), waivers.Pickup(4, "Second K", "K", "SF", 8.5, 3.0, 7.0),
+    ]
+
+    rep.big_report = False
+    standard = _body(render.render_html(rep, LEAGUE))
+    assert "Appendix A" not in standard and "Appendix B" not in standard
+    assert "Weekly Recap" in standard and "Big Edition" not in standard
+    assert "Beta leads the series 3-1" in standard and "Raven From" in standard
+    # Waivers: one pickup per position, no graded card, no full list.
+    assert "Week 3 Waiver Report" in standard and "Best QB" in standard and "Best K" in standard
+    assert "Second QB" not in standard and "Waiver Report Card" not in standard and "Suggested Pickups" not in standard
+    # Compact matchup cards with a takeaway instead of the full cards.
+    assert "Week 3 Matchups" in standard and 'class="card compact"' in standard
+    assert "Matchup Analysis" not in standard and "Alpha favored by 19.50" in standard
+    assert standard.index("Waiver Report") < standard.index("Projected Scores")
+
+    rep.big_report = True
+    big = _body(render.render_html(rep, LEAGUE))
+    assert "Appendix A" in big and "Appendix B" in big and "Big Edition" in big
+    assert "Waiver Report Card" in big and "Suggested Pickups" in big and "Second QB" in big
+    assert "Matchup Analysis" in big and "card compact" not in big

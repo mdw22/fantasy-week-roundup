@@ -18,6 +18,9 @@ from typing import Callable
 from .stats import BENCH_SLOTS, _ordinal
 
 TOP_PLAYERS_PER_SIDE = 3
+# Projected-margin bands for the compact (Standard Weekly) card's one-line takeaway.
+TOSS_UP_GAP = 3.0
+CLEAR_FAVORITE_GAP = 10.0
 # Starter statuses worth a warning on the card, and how to label them.
 STATUS_FLAGS = {
     "OUT": "Out",
@@ -87,6 +90,13 @@ class MatchupPreview:
     @property
     def gap(self) -> float:
         return abs(self.home.projected - self.away.projected)
+
+    @property
+    def closeness(self) -> str:
+        """"toss-up", "edge" or "clear" by projected margin (see TOSS_UP_GAP, CLEAR_FAVORITE_GAP)."""
+        if self.gap < TOSS_UP_GAP:
+            return "toss-up"
+        return "edge" if self.gap < CLEAR_FAVORITE_GAP else "clear"
 
     @property
     def combined_wins(self) -> int:

@@ -86,6 +86,31 @@ Output lands in `reports/week_<N>_<year>.pdf` and is committed back to the repo 
 the design spec for why: the tool is stateless and re-fetches ESPN data each run, except for the
 lore file).
 
+### Standard Weekly vs. Big Report
+
+Every run builds the full report data; the mode only decides what the PDF shows, so switching back
+to the Big Report never needs anything rebuilt.
+
+- **Standard Weekly** (the default): scoreboard and Week at a Glance, standings with playoff odds
+  and both rankings, Season Leaders, all team and individual highlights, a short **Waiver Report**
+  (the best free agent at each position for next week), next week's projected scores, highlight
+  picks and Bold Prediction, one **compact matchup card** per game (records, projections, a key
+  player per side, Lineup Watch, the all-time series, and a one-line takeaway: toss-up under 3
+  projected points, slight edge under 10, otherwise a clear favorite), and the letter.
+- **Big Report**: everything in Standard, but with the graded Waiver Report Card, the full
+  Matchup Analysis cards and full Suggested Pickups list in place of their short versions, plus
+  Appendix A (season stats) and Appendix B (lifetime stats), and a "Big Edition" cover.
+
+Big Report weeks are listed in `config/league.yaml`:
+
+```yaml
+big_report_weeks: [3, 8]
+```
+
+Override the schedule for a single run with `--big` or `--standard`, e.g.
+`./run.sh --week 5 --letter-file drafts/week_5_2026_letter.txt --big`. The mode only affects
+rendering, so the letter draft is the same either way.
+
 ### Editing the Commissioner's Letter before it renders
 
 To review or hand-edit the narrative before it's baked into a PDF, split the run into two steps:
@@ -148,7 +173,7 @@ week's preview), `src/report_data.py`
 Cover, then scoreboard (with a "Week N at a Glance" score bar chart), standings, team highlights,
 individual highlights, and the Waiver Report Card (Part I, the week just played); Part II, next
 week's preview (projected scores, highlight picks, a Matchup Analysis card per game, Suggested
-Pickups); two appendices; and the Commissioner's Letter last.
+Pickups); two appendices (Big Report weeks only, see above); and the Commissioner's Letter last.
 
 - **Rank movement** — Power Rank and Mike's Rankings show how many places a team moved since last
   week. ESPN's power rankings are recomputed from each team's scoring history through a given week

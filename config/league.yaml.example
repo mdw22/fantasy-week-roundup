@@ -4,3 +4,7 @@ narrative_theme: "Game of Thrones — teams as rival houses, season as a running
 team_nickname_overrides: {}   # optional: ESPN team name -> preferred display name
 logo_path: "assets/league_logo.png"   # relative to templates/ — the WeasyPrint render base dir
 seal_monogram: ""   # optional: 1-2 letters for the wax-seal emblem; defaults to commissioner_name's initial
+
+# Weeks rendered as the Big Report (season + lifetime appendices). Every other week is the Standard
+# Weekly report. Override for one run with --big or --standard.
+big_report_weeks: [3, 8]

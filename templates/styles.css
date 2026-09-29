@@ -892,3 +892,16 @@ tr.former td, .appendix-note .former {
   letter-spacing: 0.3pt;
   color: var(--muted);
 }
+
+/* Standard Weekly's compact matchup card: same look, tighter spacing. */
+.card.compact {
+  margin-bottom: 0.1in;
+}
+
+.card.compact .card-head {
+  padding: 3pt 8pt;
+}
+
+.card.compact .card-team {
+  font-size: 10pt;
+}

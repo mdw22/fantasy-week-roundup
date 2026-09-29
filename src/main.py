@@ -1,4 +1,4 @@
-"""CLI entry point: python -m src.main [--week N] [--draft-only] [--letter-file PATH]"""
+"""CLI entry point: python -m src.main [--week N] [--draft-only] [--letter-file PATH] [--big | --standard]"""
 
 from __future__ import annotations
 
@@ -16,6 +16,14 @@ CONFIG_DIR = BASE_DIR / "config"
 REPORTS_DIR = BASE_DIR / "reports"
 DRAFTS_DIR = BASE_DIR / "drafts"
 HISTORY_DIR = BASE_DIR / "data" / "history"
+
+
+def is_big_report(league_config: dict, week: int, override: bool | None = None) -> bool:
+    """Big Report mode for this week? An explicit --big / --standard (`override`) wins; otherwise
+    weeks listed in league.yaml's `big_report_weeks` are Big and every other week is Standard."""
+    if override is not None:
+        return override
+    return week in (league_config.get("big_report_weeks") or [])
 
 
 def load_league_config() -> dict:
@@ -73,9 +81,15 @@ def generate_letter_draft(week: int | None = None, refresh_history: bool = False
 
 
 def generate_report(
-    week: int | None = None, letter_file: str | Path | None = None, refresh_history: bool = False
+    week: int | None = None,
+    letter_file: str | Path | None = None,
+    refresh_history: bool = False,
+    big_report: bool | None = None,
 ) -> Path:
+    """`big_report` forces Big Report (True) or Standard Weekly (False) mode; None follows the
+    `big_report_weeks` schedule in league.yaml."""
     report, league_config = _connect_and_build_report(week, refresh_history)
+    report.big_report = is_big_report(league_config, report.week, big_report)
 
     if letter_file:
         report.commissioners_letter, lore_note, nicknames_text, bold_prediction = narrative.split_response(
@@ -124,6 +138,23 @@ def main():
         help="Use this file's contents as the Commissioner's Letter instead of generating one "
         "(e.g. a draft from --draft-only that you've edited)",
     )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--big",
+        dest="big_report",
+        action="store_const",
+        const=True,
+        default=None,
+        help="Render the Big Report (with the season and lifetime appendices) regardless of the "
+        "big_report_weeks schedule in config/league.yaml",
+    )
+    mode.add_argument(
+        "--standard",
+        dest="big_report",
+        action="store_const",
+        const=False,
+        help="Render the Standard Weekly report (no appendices) regardless of the schedule",
+    )
     parser.add_argument(
         "--refresh-history",
         action="store_true",
@@ -134,10 +165,18 @@ def main():
     if args.draft_only:
         draft_path, resolved_week = generate_letter_draft(week=args.week, refresh_history=args.refresh_history)
         print(f"Letter draft written to {draft_path}")
-        print(f"Edit it, then run: python -m src.main --week {resolved_week} --letter-file {draft_path}")
+        mode_flag = {True: " --big", False: " --standard"}.get(args.big_report, "")
+        print(
+            f"Edit it, then run: python -m src.main --week {resolved_week} --letter-file {draft_path}{mode_flag}"
+        )
         return
 
-    output_path = generate_report(week=args.week, letter_file=args.letter_file, refresh_history=args.refresh_history)
+    output_path = generate_report(
+        week=args.week,
+        letter_file=args.letter_file,
+        refresh_history=args.refresh_history,
+        big_report=args.big_report,
+    )
     print(f"Report written to {output_path}")
 
 
