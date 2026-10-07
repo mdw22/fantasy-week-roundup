@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import espn_client, history, nfl_supplemental, preview, stats, waivers
+from . import casualties, espn_client, history, nfl_supplemental, preview, stats, waivers
 
 
 @dataclass
@@ -76,6 +76,10 @@ class WeekReport:
     pickups: list[waivers.Pickup] = field(default_factory=list)
     # II. Week N+1 Preview; None under the same conditions as `pickups`, or if the lookup failed.
     preview: preview.Preview | None = None
+    # Starters lost to injury this week, ranked by team; shown under the Waiver Report. Never sent
+    # to the letter (that's `injuries` above). None under the same conditions as `pickups`, or if
+    # a lookup failed.
+    casualty_report: casualties.CasualtyReport | None = None
     commissioners_letter: str | None = None
     season_extras: dict = field(default_factory=dict)
     # Big Report mode renders the appendices (season_table, lifetime) too; Standard Weekly mode
@@ -226,6 +230,33 @@ def _safe_game_injuries(season: int, week: int) -> list:
     except Exception as exc:  # noqa: BLE001 - should never take down the whole report
         print(f"warning: in-game injury lookup failed ({exc}); omitting from letter context.")
         return []
+
+
+def _safe_casualty_report(
+    league, week: int, box_scores_by_week: dict[int, list], team_order: list[str]
+) -> casualties.CasualtyReport | None:
+    # Only the latest completed week: a backfill can't trust today's ESPN injury statuses.
+    if not _is_current_report(league, week):
+        return None
+    try:
+        weeks = sorted(box_scores_by_week)
+        left_game = {
+            w: {c.espn_id for c in nfl_supplemental.get_game_injuries(league.year, w) if c.espn_id is not None}
+            for w in weeks
+        }
+        draft = league.draft or []
+        return casualties.casualty_report(
+            box_scores_by_week,
+            nfl_supplemental.get_injury_designations_by_week(league.year, weeks),
+            nfl_supplemental.get_reserve_by_week(league.year, weeks),
+            left_game,
+            {pick.playerId: (pick.team.team_name, pick.round_num) for pick in draft},
+            max((pick.round_num for pick in draft), default=0),
+            team_order,
+        )
+    except Exception as exc:  # noqa: BLE001 - a supplemental section should never take down the report
+        print(f"warning: Casualty Report unavailable ({exc}); omitting it.")
+        return None
 
 
 def _safe_history(league, week: int, history_dir, refresh: bool) -> tuple[list[dict] | None, history.LifetimeStats | None]:
@@ -464,5 +495,8 @@ def build_week_report(
         lifetime=lifetime,
         waiver_report_card=_safe_waiver_report_card(league, week, box_scores),
         pickups=_safe_pickups(league, week),
+        casualty_report=_safe_casualty_report(
+            league, week, box_scores_by_week, [row.team_name for row in standings_rows]
+        ),
         preview=_safe_preview(league, week, _team_contexts(espn_teams, standings_rows, box_scores), seasons),
     )

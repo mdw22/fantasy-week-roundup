@@ -326,6 +326,57 @@ def _players_who_did_not_return(plays: list[dict]) -> dict[tuple[str, str, str],
     return {key: info["qtr"] for key, info in state.items() if not info["returned"]}
 
 
+def _espn_ids_by_gsis(season: int) -> dict[str, int]:
+    rosters = nfl.load_rosters(seasons=[season])
+    columns = rosters.columns
+    gsis_col = _require_column(columns, ["gsis_id"], "gsis_id", "load_rosters")
+    espn_col = _require_column(columns, ["espn_id"], "espn_id", "load_rosters")
+    return {
+        row[gsis_col]: int(row[espn_col])
+        for row in rosters.select([gsis_col, espn_col]).to_dicts()
+        if row[gsis_col] and row[espn_col] is not None
+    }
+
+
+def get_injury_designations_by_week(season: int, weeks: list[int]) -> dict[int, dict[int, str]]:
+    """week -> {ESPN player ID -> that week's official injury-report game status ("Out",
+    "Doubtful", "Questionable")}, from nflverse's weekly injury reports. Players with no game
+    status are omitted. Used by the Casualty Report for weeks ESPN can't describe after the fact
+    (its injuryStatus is only today's)."""
+    injuries = nfl.load_injuries(seasons=[season])
+    columns = injuries.columns
+    week_col = _require_column(columns, ["week"], "week", "load_injuries")
+    gsis_col = _require_column(columns, ["gsis_id"], "gsis_id", "load_injuries")
+    status_col = _require_column(columns, ["report_status"], "report_status", "load_injuries")
+    espn_by_gsis = _espn_ids_by_gsis(season)
+    by_week: dict[int, dict[int, str]] = {w: {} for w in weeks}
+    for row in injuries.filter(injuries[week_col].is_in(weeks)).select([week_col, gsis_col, status_col]).to_dicts():
+        if row[status_col] and row[gsis_col] in espn_by_gsis:
+            by_week[row[week_col]][espn_by_gsis[row[gsis_col]]] = row[status_col]
+    return by_week
+
+
+# nflverse weekly-roster status for injured reserve (and other reserve lists).
+RESERVE_STATUS = "RES"
+
+
+def get_reserve_by_week(season: int, weeks: list[int]) -> dict[int, set[int]]:
+    """week -> ESPN IDs of players on an NFL reserve list (injured reserve) that week, from
+    nflverse's weekly rosters. Players on IR aren't on weekly injury reports, so the Casualty Report
+    needs this to count their missed games."""
+    rosters = nfl.load_rosters_weekly(seasons=[season])
+    columns = rosters.columns
+    week_col = _require_column(columns, ["week"], "week", "load_rosters_weekly")
+    status_col = _require_column(columns, ["status"], "status", "load_rosters_weekly")
+    espn_col = _require_column(columns, ["espn_id"], "espn_id", "load_rosters_weekly")
+    by_week: dict[int, set[int]] = {w: set() for w in weeks}
+    rows = rosters.filter(rosters[week_col].is_in(weeks) & (rosters[status_col] == RESERVE_STATUS))
+    for row in rows.select([week_col, espn_col]).to_dicts():
+        if row[espn_col] is not None:
+            by_week[row[week_col]].add(int(row[espn_col]))
+    return by_week
+
+
 def get_game_injuries(season: int, week: int) -> list[InjuryCandidate]:
     """Every in-game injury this week, league-wide, where the player didn't return to that game
     (see _players_who_did_not_return for what that does and doesn't mean). report_data scopes

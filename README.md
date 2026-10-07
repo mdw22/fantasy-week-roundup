@@ -94,8 +94,8 @@ to the Big Report never needs anything rebuilt.
 - **Standard Weekly** (the default): scoreboard and Week at a Glance, standings with playoff odds
   and both rankings, Season Leaders, all team and individual highlights, a short **Waiver Report**
   (the best free agent at each position for next week), next week's projected scores, highlight
-  picks and Bold Prediction, one **compact matchup card** per game (records, projections, a key
-  player per side, Lineup Watch, the all-time series, and a one-line takeaway: toss-up under 3
+  picks and Bold Prediction, one **compact matchup card** per game (records, projections, the top three
+  projected players per side, Lineup Watch, the all-time series, and a one-line takeaway: toss-up under 3
   projected points, slight edge under 10, otherwise a clear favorite), and the letter.
 - **Big Report**: everything in Standard, but with the graded Waiver Report Card, the full
   Matchup Analysis cards and full Suggested Pickups list in place of their short versions, plus
@@ -163,7 +163,7 @@ required.
 
 See `src/espn_client.py` (league connection + raw fetches), `src/stats.py` (highlight math),
 `src/narrative.py` (Commissioner's Letter prompt + Claude API call), `src/history.py` (past
-seasons and lifetime stats), `src/waivers.py` (report card and pickups), `src/preview.py` (next
+seasons and lifetime stats), `src/waivers.py` (report card and pickups), `src/casualties.py` (Casualty Report), `src/preview.py` (next
 week's preview), `src/report_data.py`
 (assembles one `WeekReport` per run), `src/render.py` (Jinja2 + WeasyPrint → PDF), and
 `src/main.py` (CLI entry point).
@@ -196,6 +196,20 @@ Pickups); two appendices (Big Report weeks only, see above); and the Commissione
 - **Suggested Pickups** — the top two free agents at each position by ESPN's projection for next
   week, with last week's points and % rostered. Only built when the report is for the latest completed week (a
   backfill can't know who was available back then) and there is a next week.
+- **Casualty Report** — under the waiver table in both modes: which teams have lost the most
+  starters to injury this season, and who was hurt this week. A regular starter (started for the
+  team at least once, or was one of its first four draft picks) is hurt in a week if he missed
+  the game hurt (on that week's injury report, on NFL injured reserve, or in the fantasy IR slot)
+  or left the game and didn't return, confirmed by him still being hurt afterwards so one-play
+  breathers don't count. Byes never count. Columns: **Starters Hurt** (distinct players, the
+  ranking number), **Weeks Affected** ("3 of 4": weeks with at least one starter hurt, never more
+  than the weeks played), **Biggest Loss** (earliest draft pick, e.g. "1st-round pick"), and
+  **Hurt in Week N** (surnames one per line, "(out)" / "(IR)" if still out today, or "None").
+  Ties break on total player-games missed, then draft position, then standings; none of those
+  are printed. Up to 6 teams in Standard and 3 in Big, fewer if their Hurt column runs long, so
+  it never spills off the page. Latest completed week only, and never sent to the letter
+  (`src/casualties.py`, with nflverse injury reports, weekly rosters and play-by-play for past
+  weeks).
 - **Week N+1 Preview** — ESPN's projected scores for next week (lineups as of the report, which
   managers can still change), then rule-based picks, each on a different game where possible:
   Game of the Week (most combined wins, then closest projection), Blowout Watch (widest projected

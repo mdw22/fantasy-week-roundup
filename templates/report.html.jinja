@@ -38,6 +38,53 @@
 </table>
 {% endmacro %}
 
+{# Casualty Report: season-to-date starters hurt, shown under whichever waiver table the mode
+   renders. Capped so it stays on the waiver page (CasualtyReport.visible_rows): up to 6 teams /
+   14 line-heights under Standard's 6-player table, 3 / 8 under Big's 12-player one -- measured
+   against rendered pages. #}
+{% macro casualty_block(cr, max_rows, max_lines) %}
+<div class="casualty-block">
+  <h2>Casualty Report</h2>
+  <p class="appendix-note">Which teams have lost the most starters to injury this season, and who was hurt this week.</p>
+  {% if cr.rows %}
+  {% set shown = cr.visible_rows(max_rows, max_lines) %}
+  <table class="casualty-table">
+    <thead>
+      <tr><th>Rank</th><th>Team</th><th>Starters Hurt</th><th>Weeks Affected</th><th>Biggest Loss</th><th>Hurt in Week {{ cr.week }}</th></tr>
+    </thead>
+    <tbody>
+      {% for row in shown %}
+      {% set big = row.biggest_loss %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ display_name(row.team_name) }}</td>
+        <td>{{ row.starters_hurt }}</td>
+        <td>{{ row.weeks_affected }} of {{ cr.weeks_played }}</td>
+        <td>{{ big.name }}, {{ big.position }}, {{ big.draft_label }}</td>
+        <td>
+          {%- for p in row.this_week %}
+          <div class="hurt-name">{{ p.surname }}{% if p.status_word %} ({{ p.status_word }}){% endif %}</div>
+          {%- else %}None{% endfor -%}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set marked = [] %}
+  {% for row in shown %}{% for p in row.this_week %}{% if p.status_word %}{% set _ = marked.append(p) %}{% endif %}{% endfor %}{% endfor %}
+  {% set more = cr.rows | length - shown | length %}
+  <p class="appendix-note">
+    {%- if marked %}(out) / (IR) = still hurt as of today. {% endif -%}
+    Weeks Affected = weeks this season with at least one starter out hurt.
+    {%- if more > 0 %} {{ more }} more team{{ "s have" if more != 1 else " has" }} had starters miss games.{% endif -%}
+    {%- if cr.unaffected_teams %} {{ cr.unaffected_teams }} other team{{ "s have" if cr.unaffected_teams != 1 else " has" }} lost no starters.{% endif -%}
+  </p>
+  {% else %}
+  <p>No starters have missed games to injury this season.</p>
+  {% endif %}
+</div>
+{% endmacro %}
+
 {% macro wax_seal(css_class) %}
 {% set monogram = league.seal_monogram if league.seal_monogram else (league.commissioner_name.split() | last)[0] | upper %}
 <div class="wax-seal {{ css_class }}">
@@ -282,12 +329,15 @@
 </div>
 {% endif %}
 
-{% if not report.big_report and report.top_pickups %}
+{% if not report.big_report and (report.top_pickups or report.casualty_report) %}
 <div class="section">
+  {% if report.top_pickups %}
   <h2>Week {{ report.week + 1 }} Waiver Report</h2>
   <p class="appendix-note">The best available free agent at each position by ESPN's Week {{ report.week + 1 }}
     projection, as of {{ report.report_date.strftime("%A, %B %-d") }}. Waivers clear Wednesday morning.</p>
   {{ pickups_table(report.top_pickups) }}
+  {% endif %}
+  {% if report.casualty_report %}{{ casualty_block(report.casualty_report, 6, 14) }}{% endif %}
 </div>
 {% endif %}
 
@@ -423,7 +473,7 @@
     </div>
     <table class="card-table">
       <tbody>
-        <tr><td>{{ player_lines(m.home.top_players[:1]) }}</td><th>Key Player</th><td>{{ player_lines(m.away.top_players[:1]) }}</td></tr>
+        <tr><td>{{ player_lines(m.home.top_players) }}</td><th>Key Players</th><td>{{ player_lines(m.away.top_players) }}</td></tr>
         <tr><td>{{ flag_lines(m.home.flagged) }}</td><th>Lineup Watch</th><td>{{ flag_lines(m.away.flagged) }}</td></tr>
       </tbody>
     </table>
@@ -440,12 +490,15 @@
 {% endif %}
 {% endif %}
 
-{% if report.big_report and report.pickups %}
+{% if report.big_report and (report.pickups or report.casualty_report) %}
 <div class="section">
+  {% if report.pickups %}
   <h2>Suggested Pickups for Week {{ report.week + 1 }}</h2>
   <p class="appendix-note">Best available free agents by ESPN's Week {{ report.week + 1 }} projection, as of
     {{ report.report_date.strftime("%A, %B %-d") }}. Waivers clear Wednesday morning.</p>
   {{ pickups_table(report.pickups) }}
+  {% endif %}
+  {% if report.casualty_report %}{{ casualty_block(report.casualty_report, 3, 8) }}{% endif %}
 </div>
 {% endif %}
 

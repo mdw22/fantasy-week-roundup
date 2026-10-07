@@ -239,3 +239,43 @@ def test_standard_mode_hides_appendices_but_keeps_everything_else():
     assert "Appendix A" in big and "Appendix B" in big and "Big Edition" in big
     assert "Waiver Report Card" in big and "Suggested Pickups" in big and "Second QB" in big
     assert "Matchup Analysis" in big and "card compact" not in big
+
+
+def test_casualty_report_renders_checkable_numbers_and_plain_names():
+    import re
+
+    from src import casualties, waivers
+
+    def toll(pid, name, rnd, weeks, word=None):
+        return casualties.PlayerToll(pid, name, "RB", rnd, weeks=set(weeks), this_week=4 in weeks, status_word=word)
+
+    rows = [
+        casualties.TeamToll("Kegs", [toll(1, "Saquon Barkley", 1, {4}), toll(2, "Caleb Williams", 8, {2, 3, 4}, "out")]),
+        casualties.TeamToll("Quiet", [toll(3, "Old Injury", None, {1})]),
+    ] + [casualties.TeamToll(f"Team {i}", [toll(10 + i, f"P {i}", None, {2})]) for i in range(6)]
+    rep = _report([_row("A", None)])
+    rep.pickups = [waivers.Pickup(1, "Best QB", "QB", "SF", 18.0, 3.0, 20.0)]
+    assert "Casualty Report" not in _body(render.render_html(rep, LEAGUE))
+
+    rep.casualty_report = casualties.CasualtyReport(rows, 3, 4, 4)
+    for big in (False, True):
+        rep.big_report = big
+        html = _body(render.render_html(rep, LEAGUE))
+        block = html[html.index("Casualty Report"):]
+        for heading in ("Starters Hurt", "Weeks Affected", "Biggest Loss", "Hurt in Week 4"):
+            assert f"<th>{heading}</th>" in block
+        assert "Games Missed" not in block and not re.search(r"\+\d", block)  # no "+N" anywhere
+        assert "3 of 4" in block and "1 of 4" in block
+        assert "Saquon Barkley, RB, 1st-round pick" in block and "undrafted" in block
+        # One name per line, status word on the same line as its player.
+        assert '<div class="hurt-name">Barkley</div>' in block
+        assert '<div class="hurt-name">Williams (out)</div>' in block
+        assert ">None<" in block  # "Quiet" had nobody hurt this week
+        assert "(out) / (IR) = still hurt as of today." in block
+        assert "Weeks Affected = weeks this season with at least one starter out hurt." in block
+        assert "capital" not in block.lower()
+        assert html.index("Best QB") < html.index("Casualty Report")
+
+    rep.casualty_report = casualties.CasualtyReport([], 14, 4, 4)
+    html = _body(render.render_html(rep, LEAGUE))
+    assert "No starters have missed games to injury this season." in html and 'class="casualty-table"' not in html

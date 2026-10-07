@@ -905,3 +905,45 @@ tr.former td, .appendix-note .former {
 .card.compact .card-team {
   font-size: 10pt;
 }
+
+/* --- Casualty Report: sits under the waiver table on the same page --- */
+.casualty-block {
+  margin-top: 0.25in;
+}
+
+/* Keep the heading and its note with the table. (break-inside: avoid on the whole block makes
+   WeasyPrint push it to the next page even when it fits, so the row cap does that job instead.) */
+.casualty-block h2,
+.casualty-block > .appendix-note:first-of-type {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.casualty-table {
+  table-layout: fixed;
+  font-size: 9pt;
+}
+
+.casualty-table th:nth-child(1) { width: 6%; }
+.casualty-table th:nth-child(2) { width: 31%; }
+.casualty-table th:nth-child(3) { width: 10%; }
+.casualty-table th:nth-child(4) { width: 11%; }
+.casualty-table th:nth-child(5) { width: 27%; }
+.casualty-table th:nth-child(6) { width: 15%; }
+
+.casualty-table th {
+  white-space: normal;
+  padding-left: 4pt;
+  padding-right: 4pt;
+}
+
+.casualty-table td {
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  padding: 4pt;
+}
+
+/* One player per line in "Hurt in Week N"; his status word never wraps away from his name. */
+.casualty-table .hurt-name {
+  white-space: nowrap;
+}
