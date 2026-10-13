@@ -279,3 +279,10 @@ def test_casualty_report_renders_checkable_numbers_and_plain_names():
     rep.casualty_report = casualties.CasualtyReport([], 14, 4, 4)
     html = _body(render.render_html(rep, LEAGUE))
     assert "No starters have missed games to injury this season." in html and 'class="casualty-table"' not in html
+
+
+def test_long_team_names_get_a_smaller_chart_label():
+    bars = [stats.ScoreBar("Waelde'sUnderageGroomingAcademy", 150.0, True, 100.0), stats.ScoreBar("Short Name", 75.0, False, 50.0)]
+    html = render.render_html(_report([_row("A", None)], score_bars=bars), LEAGUE)
+    assert 'class="chart-label won long">Waelde' in html
+    assert 'class="chart-label  ">Short Name' in html

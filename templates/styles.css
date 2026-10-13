@@ -486,6 +486,10 @@ h3.subhead {
   overflow-wrap: anywhere;
 }
 
+.score-chart .chart-label.long {
+  font-size: 7.5pt;
+}
+
 .score-chart .chart-label.won {
   font-weight: 600;
   color: var(--accent-dark);

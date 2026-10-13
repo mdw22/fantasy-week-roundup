@@ -142,7 +142,9 @@
   <div class="score-chart">
     {% for bar in report.score_bars %}
     <div class="chart-row">
-      <div class="chart-label {{ 'won' if bar.won else '' }}">{{ display_name(bar.team_name) }}</div>
+      {% set label = display_name(bar.team_name) | trim %}
+      {# Very long names (e.g. Waelde'sUnderageGroomingAcademy) get a smaller font so they don't wrap. #}
+      <div class="chart-label {{ 'won' if bar.won else '' }} {{ 'long' if label | length > 26 else '' }}">{{ label }}</div>
       <div class="chart-track">
         <div class="chart-bar {{ 'won' if bar.won else 'lost' }}" style="width: {{ '%.1f'|format(bar.pct * 0.86) }}%"></div>
         <span class="chart-value">{{ "%.2f"|format(bar.score) }}</span>
